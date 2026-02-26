@@ -7,10 +7,13 @@ import com.acmerobotics.dashboard.config.Config;
 public class myConstants {
     @Config
     public static class intake {
-        public static double intakeLIntakePos = 0.35;
-        public static double intakeRIntakePos = 0.65;
-        public static double intakeLoutakePos = 0;
-        public static double intakeRoutakePos = 1;
+        public static double intakeLIntakePos = 1;
+        public static double intakeRIntakePos = 0;
+        public static double intakeLoutakePos = 0.65;
+        public static double intakeRoutakePos = 0.35;
+        public static double intakeLSwitchBallPos = 0.75;
+        public static double intakeRSwitchBallPos = 0.25;
+
     }
     @Config
     public static class Turret{
@@ -26,9 +29,10 @@ public class myConstants {
     }
     @Config
     public static class Spindex{
-        public static double KpSpindex = 0.015;
-        public static double KiSpindex = 0.002;
-        public static double KdSpindex =0;
+        public static double KpSpindex = 0.05;
+        public static double KiSpindex = 0;
+        public static double KdSpindex =0.004;
+        public static double KfSpindex =0.03;
 
     }
 }

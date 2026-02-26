@@ -3,9 +3,13 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 
 import static org.firstinspires.ftc.teamcode.myConstants.intake.intakeLIntakePos;
+import static org.firstinspires.ftc.teamcode.myConstants.intake.intakeLSwitchBallPos;
 import static org.firstinspires.ftc.teamcode.myConstants.intake.intakeLoutakePos;
 import static org.firstinspires.ftc.teamcode.myConstants.intake.intakeRIntakePos;
 import static org.firstinspires.ftc.teamcode.myConstants.intake.intakeRoutakePos;
+
+import static org.firstinspires.ftc.teamcode.myConstants.intake.intakeRIntakePos;
+import static org.firstinspires.ftc.teamcode.myConstants.intake.intakeRSwitchBallPos;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -43,6 +47,11 @@ public class Intake {
         intakeL.setPosition(intakeLIntakePos);
         intakeR.setPosition(intakeRIntakePos);
 
+
+    }
+    public void switchBallOrder(){
+        intakeL.setPosition(intakeLSwitchBallPos);
+        intakeR.setPosition(intakeRSwitchBallPos);
 
     }
     public void shootBalls(){

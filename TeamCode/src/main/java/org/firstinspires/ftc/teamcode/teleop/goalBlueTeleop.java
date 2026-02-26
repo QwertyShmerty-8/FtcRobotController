@@ -40,6 +40,11 @@ public class goalBlueTeleop extends OpMode {
     public static Pose startingPose = new Pose(20,123,Math.toRadians(143));
     public static Pose resetPose = new Pose(20,123,Math.toRadians(143));
 
+    private double lastLootTime=0;
+    private double currentLoopTime;
+
+
+
     private Supplier<PathChain> pathChain;
     private TelemetryManager telemetryM;
 
@@ -127,6 +132,10 @@ public class goalBlueTeleop extends OpMode {
 
         telemetry.addData("Fly wheel Speed", turret.getFlyWheelSpeed());
         telemetry.addData("Fly wheel Speed Target", shootingvalues.flywheelspeedlut(follower.getPose().getX(), follower.getPose().getY()));
+
+        currentLoopTime = System.currentTimeMillis();
+        telemetry.addData("loop time", currentLoopTime -lastLootTime);
+        lastLootTime = currentLoopTime;
 
 
 

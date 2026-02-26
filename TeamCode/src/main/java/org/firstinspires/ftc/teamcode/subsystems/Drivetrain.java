@@ -74,4 +74,16 @@ public class Drivetrain {
             backRight.setPower(bright);
         }
     }
+    public void setBackLeft(double Power){
+        backLeft.setPower(Power);
+    }
+    public void setBackRight (double power){
+        backRight.setPower(power);
+    }
+    public void setFrontLeft(double power){
+        frontLeft.setPower(power);
+    }
+    public void setFrontRight(double power){
+        frontRight.setPower(power);
+    }
 }

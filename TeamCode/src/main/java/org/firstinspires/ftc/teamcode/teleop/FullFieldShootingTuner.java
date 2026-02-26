@@ -102,7 +102,7 @@ public class FullFieldShootingTuner extends OpMode{
         }
 
         if (gamepad1.x) {
-            spindex.setSpindexPower(0.6);
+            spindex.setSpindexPower(1);
         } else {
             spindex.setSpindexPower(0);
         }

@@ -49,7 +49,7 @@ public class Turret {
     //aimAngleRed = Math.toDegrees(Math.atan((144 - pos.y) / (144 - pos.x)));
     // turretDeviationNeeded = aimAngleBlue - pos.h;
 
-    public Turret(HardwareMap hardwareMap,  String goalColor, double initAngle){
+    public Turret(HardwareMap hardwareMap,  String goalColor, int x){
         turretMotor = hardwareMap.get(DcMotor.class, "turret");
         flyWheel = hardwareMap.get(DcMotorEx.class, "flyWheel");
         hood = hardwareMap.get(Servo.class, "top");
@@ -67,11 +67,11 @@ public class Turret {
     }
 
     public void aimTurret(double x, double y, double h){
-        double aimAngleBlue = Math.toDegrees((Math.PI / 2) + Math.atan(x / (144 - y)));
+        double aimAngleBlue = Math.toDegrees((Math.PI / 2) + Math.toDegrees(Math.atan2(x ,(144 - y))));
         double turretDeviationNeeded;
         double turretDeviation = (turretMotor.getCurrentPosition() * 360) / 1400;
 
-        double aimAngleRed = Math.toDegrees(Math.atan((144 - y) / (144 - x)));
+        double aimAngleRed = Math.toDegrees(Math.atan2((144 - y) ,(144 - x)));
         if (isBlue){
             turretDeviationNeeded = aimAngleBlue - h;
 
@@ -118,11 +118,11 @@ public class Turret {
     }
 
     public void aimTurretGreaterthan360(double x, double y, double h){
-        double aimAngleBlue = Math.toDegrees((Math.PI / 2) + Math.atan(x / (144 - y)));
+        double aimAngleBlue = Math.toDegrees((Math.PI / 2) + Math.atan2(x , (144 - y)));
         double turretDeviationNeeded;
         double turretDeviation = (turretMotor.getCurrentPosition() * 360) / 1400;
 
-        double aimAngleRed = Math.toDegrees(Math.atan((144 - y) / (144 - x)));
+        double aimAngleRed = Math.toDegrees(Math.atan2((144 - y) ,(144 - x)));
         if (isBlue){
            turretDeviationNeeded = aimAngleBlue - h;
 
@@ -172,10 +172,10 @@ public class Turret {
 
     }
     public void aimTurretOriginal(double x, double y, double h){
-        double aimAngleRed = Math.toDegrees(Math.atan((144 - y) / (144 - x)));
+        double aimAngleRed = Math.toDegrees(Math.atan2((144 - y) , (144 - x)));
 
 
-        double aimAngleBlue = Math.toDegrees((Math.PI / 2) + Math.atan(x / (144 - y)));
+        double aimAngleBlue = Math.toDegrees((Math.PI / 2) + Math.atan2(x , (144 - y)));
         double turretDeviationNeeded;
         double turretDeviation = (turretMotor.getCurrentPosition() * 360) / 1400;
 
