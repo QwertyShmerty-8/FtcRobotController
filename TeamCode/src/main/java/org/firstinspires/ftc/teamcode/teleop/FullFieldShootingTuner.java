@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.teleop;
 
-import static org.firstinspires.ftc.teamcode.pedroPathing.Tuning.follower;
-
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
@@ -10,21 +8,15 @@ import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
-import com.pedropathing.util.PoseHistory;
-import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.robotcore.external.Supplier;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
-import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
+import org.firstinspires.ftc.teamcode.subsystems.aDrivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Spindex;
 import org.firstinspires.ftc.teamcode.subsystems.Turret;
-import org.firstinspires.ftc.teamcode.subsystems.otos;
 
 @TeleOp
 @Config
@@ -37,7 +29,7 @@ public class FullFieldShootingTuner extends OpMode{
     private Spindex spindex;
     private Turret turret;
 
-    private Drivetrain drive;
+    private aDrivetrain drive;
 
     double flywheelVelocity;
     double hoodAngle;
@@ -57,8 +49,8 @@ public class FullFieldShootingTuner extends OpMode{
 
         intake = new Intake(hardwareMap);
         spindex = new Spindex (hardwareMap);
-        turret = new Turret(hardwareMap, "blue",90);
-        drive = new Drivetrain (hardwareMap);
+        turret = new Turret(hardwareMap, "blue",0,false);
+        drive = new aDrivetrain(hardwareMap);
 
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(startingPose == null ? new Pose() : startingPose);
@@ -82,7 +74,11 @@ public class FullFieldShootingTuner extends OpMode{
 
 
     public void loop() {
-        intake.forwardIntakeDirection();
+        if (gamepad1.dpad_left){
+            intake.setIntakePower(1);
+        } else if(gamepad1.dpad_right){
+            intake.setIntakePower(-1);
+        }
 
 
         follower.update();
@@ -136,6 +132,10 @@ public class FullFieldShootingTuner extends OpMode{
 
         telemetry.addData("Hood Angle", hoodAngle);
         telemetry.addData("flywheelVelocity", turret.getFlyWheelSpeed());
+        telemetry.addData ("X", follower.getPose().getX());
+        telemetry.addData ( "Y", follower.getPose().getY());
+        telemetry.addData("H", Math.toDegrees(follower.getPose().getHeading()));
+        telemetry.addData ("Turret Angle", turret.getTurretDeviationOffset());
 
         telemetryM.debug("position", follower.getPose());
         telemetryM.debug("velocity", follower.getVelocity());

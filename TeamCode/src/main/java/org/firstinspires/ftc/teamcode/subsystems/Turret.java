@@ -34,6 +34,8 @@ public class Turret {
 
     boolean isBlue;
     boolean turretOn;
+    boolean hoodOn;
+    double startTurretPosition;
 
 
 
@@ -49,29 +51,32 @@ public class Turret {
     //aimAngleRed = Math.toDegrees(Math.atan((144 - pos.y) / (144 - pos.x)));
     // turretDeviationNeeded = aimAngleBlue - pos.h;
 
-    public Turret(HardwareMap hardwareMap,  String goalColor, int x){
+    public Turret(HardwareMap hardwareMap,  String goalColor, int x, boolean turretOnx){
         turretMotor = hardwareMap.get(DcMotor.class, "turret");
         flyWheel = hardwareMap.get(DcMotorEx.class, "flyWheel");
         hood = hardwareMap.get(Servo.class, "top");
 
 
         isBlue = goalColor.equalsIgnoreCase("blue");
-        turretOn = false;
+        turretOn = turretOnx;
+        hoodOn = true;
 
-        turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); // Reset the motor encoder
+        turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                // Reset the motor encoder
         turretMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         flyWheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, flyWheelCoefficients);
         turretMotor.setDirection(DcMotor.Direction.REVERSE);
+        startTurretPosition = x;
 
         values = new Fullfieldshootingvalues(goalColor);
     }
 
     public void aimTurret(double x, double y, double h){
-        double aimAngleBlue = Math.toDegrees((Math.PI / 2) + Math.toDegrees(Math.atan2(x ,(144 - y))));
+        double aimAngleBlue = Math.toDegrees((Math.PI / 2) + Math.atan2((144 - y),(x-9.8)));
         double turretDeviationNeeded;
-        double turretDeviation = (turretMotor.getCurrentPosition() * 360) / 1400;
+        double turretDeviation = getTurretDeviationOffset();
 
-        double aimAngleRed = Math.toDegrees(Math.atan2((144 - y) ,(144 - x)));
+        double aimAngleRed = Math.toDegrees(Math.atan2((144 - y) ,(130 - x)));
         if (isBlue){
             turretDeviationNeeded = aimAngleBlue - h;
 
@@ -87,9 +92,8 @@ public class Turret {
 
         } else {
 
-            double turretAngle = (turretMotor.getCurrentPosition() * 360.0) / 1400.0;
 
-            double error = turretDeviationNeeded - turretAngle;
+            double error = turretDeviationNeeded - turretDeviation;
 
             // shortest path
 
@@ -117,12 +121,31 @@ public class Turret {
 
     }
 
+    public void autoHoodAnglelut(double x, double y){
+        if (hoodOn == true) {
+            hood.setPosition(values.hoodanglelut(x, y));
+        }
+    }
+
+    public void disableHoodAdjust(){
+        hoodOn=false;
+    }
+    public void enableHoodAdjust(){
+        hoodOn=true;
+    }
+    public void switchHoodAdjust(){
+        hoodOn= !hoodOn;
+    }
+    public boolean getHoodAdjustOn(){
+        return hoodOn;
+    }
     public void aimTurretGreaterthan360(double x, double y, double h){
         double aimAngleBlue = Math.toDegrees((Math.PI / 2) + Math.atan2(x , (144 - y)));
         double turretDeviationNeeded;
-        double turretDeviation = (turretMotor.getCurrentPosition() * 360) / 1400;
+        double turretDeviation = getTurretDeviationOffset();
 
         double aimAngleRed = Math.toDegrees(Math.atan2((144 - y) ,(144 - x)));
+
         if (isBlue){
            turretDeviationNeeded = aimAngleBlue - h;
 
@@ -177,7 +200,7 @@ public class Turret {
 
         double aimAngleBlue = Math.toDegrees((Math.PI / 2) + Math.atan2(x , (144 - y)));
         double turretDeviationNeeded;
-        double turretDeviation = (turretMotor.getCurrentPosition() * 360) / 1400;
+        double turretDeviation = getTurretDeviationOffset();
 
 
         if (isBlue){
@@ -216,6 +239,13 @@ public class Turret {
             lastError = error;
 
         }
+    }
+    public double getTargetBlue(double x,double y){
+        return Math.toDegrees((Math.PI / 2) + Math.atan2((144 - y),(x-9.8)));
+    }
+    public double getTargetRed(double x,double y){
+
+        return Math.toDegrees(Math.atan2((144 - y) ,(130 - x)));
     }
 
     public void disableTurret(){
@@ -266,8 +296,12 @@ public class Turret {
     }
     public double getHoodAngle(){return hood.getPosition();}
 
-    public double getTurretDeviation(){
+
+    public double getTurretDeviationFromEncoder(){
         return (turretMotor.getCurrentPosition() * 360) / 1400;
+    }
+    public double getTurretDeviationOffset(){
+        return ((turretMotor.getCurrentPosition() * 360) / 1400)-startTurretPosition;
     }
     public void updateFlywheelCoefficents(){
         flyWheelCoefficients = new PIDFCoefficients (Pflywheel,Iflywheel,Dflywheel,Fflywheel);

@@ -7,17 +7,20 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 @Config
 
-public class Drivetrain {
+public class aDrivetrain {
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
     DcMotor backRight;
+    boolean slowMode;
+    boolean holdMode;
 
-    public Drivetrain(HardwareMap hardwareMap){
+    public aDrivetrain(HardwareMap hardwareMap){
         backLeft = hardwareMap.get(DcMotor.class, "backLeft");
         backRight = hardwareMap.get(DcMotor.class, "backRight");
         frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
         frontRight = hardwareMap.get(DcMotor.class, "frontRight");
+        slowMode = false;
 
         backLeft.setDirection(DcMotor.Direction.FORWARD);
         backRight.setDirection(DcMotor.Direction.REVERSE);
@@ -37,10 +40,21 @@ public class Drivetrain {
         double fright = (-x + y + rotate) * powerfactor;
         double bleft = (-x + y - rotate) * powerfactor;
         double bright = (x + y + rotate) * powerfactor;
-        frontLeft.setPower(fleft);
-        frontRight.setPower(fright);
-        backLeft.setPower(bleft);
-        backRight.setPower(bright);
+
+        if (slowMode){
+            fleft =Math.max(-0.25, Math.min(0.25, fleft));
+            fright =Math.max(-0.25, Math.min(0.25, fright));
+            bleft =Math.max(-0.25, Math.min(0.25, bleft));
+            bright =Math.max(-0.25, Math.min(0.25, bright));
+
+        }
+        if (!holdMode) {
+            frontLeft.setPower(fleft);
+            frontRight.setPower(fright);
+            backLeft.setPower(bleft);
+            backRight.setPower(bright);
+        }
+
     }
 
     public void driveIG(double right_stick_x, double right_stick_y, double left_stick_x, double left_trigger, double right_trigger){
@@ -85,5 +99,12 @@ public class Drivetrain {
     }
     public void setFrontRight(double power){
         frontRight.setPower(power);
+    }
+    public void setSlowmode (boolean slowmode){slowMode= slowmode;}
+    public void switchSlowmode (){slowMode= !slowMode;}
+    public boolean getSlowmode(){return slowMode;}
+    public boolean getHoldMode(){return holdMode;}
+    public void switchHoldMode(){
+        holdMode = !holdMode;
     }
 }

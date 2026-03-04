@@ -25,6 +25,7 @@ public class Intake {
     Servo intakeL;
     CRServo suctionL;
     CRServo suctionR;
+    boolean sortMode;
 
     public Intake (HardwareMap hardwareMap){
         intakeMotor = hardwareMap.get(DcMotor.class, "intake");
@@ -39,6 +40,7 @@ public class Intake {
 
         intakeL.setPosition(intakeLIntakePos);
         intakeR.setPosition(intakeRIntakePos);
+        sortMode = false;
     }
 
     //Useful Funcitons
@@ -70,6 +72,19 @@ public void forwardIntakeDirection(){
     suctionR.setPower(1);
 
 }
+
+public void switchSortMode(){
+        sortMode = !sortMode;
+}
+    public void configureSortMode(){
+        if (sortMode ==true){
+            shootBalls();
+            setIntakePower(-1);
+        }
+    }
+    public boolean getSortMode(){
+        return sortMode;
+    }
     public void reverseIntakeDirection(){
         intakeMotor.setPower(-1);
         suctionL.setPower(1);
