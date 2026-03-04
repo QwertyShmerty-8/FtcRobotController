@@ -1,224 +1,372 @@
-package org.firstinspires.ftc.teamcode.Autos; // make sure this aligns with class location
+package org.firstinspires.ftc.teamcode.Autos;
+
+import static org.firstinspires.ftc.teamcode.Autos.BlueCloseAuto.PathState.STARTINTAKEGPP_ENDINTAKEGPP;
+import static org.firstinspires.ftc.teamcode.Autos.simpleGoalBlueAuto.PathState.SHOOTPOSETOENDPOSE;
 
 import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
-import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
+import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.subsystems.Spindex;
+import org.firstinspires.ftc.teamcode.subsystems.Turret;
+import org.firstinspires.ftc.teamcode.subsystems.aDrivetrain;
 
-@Autonomous(name = "Example Auto", group = "Examples")
+import java.util.List;
+
+
+@Autonomous
+
 public class BlueCloseAuto extends OpMode {
 
     private Follower follower;
-    private Timer pathTimer, actionTimer, opmodeTimer;
+    private Timer pathTimer, opModeTimer;
+    private Intake intake;
+    private Spindex spindex;
+    private Turret turret;
+    private Limelight3A limelight;
+    int idb=21;
+    double ppgGoToPosition;
+    double pgpGoToPosition;
+    double gppGoToPosition;
 
-    private int pathState;
-    private final Pose startPose = new Pose(20.3495145631068, 122.64077669902913, Math.toRadians(180)); // Start Pose of our robot.
-    private final Pose scorePose = new Pose(60, 85, Math.toRadians(135)); // Scoring Pose of our robot. It is facing the goal at a 135 degree angle.
-    private final Pose pickup1Pose = new Pose(37, 121, Math.toRadians(0)); // Highest (First Set) of Artifacts from the Spike Mark.
-    private final Pose pickup2Pose = new Pose(43, 130, Math.toRadians(0)); // Middle (Second Set) of Artifacts from the Spike Mark.
-    private final Pose pickup3Pose = new Pose(49, 135, Math.toRadians(0)); // Lowest (Third Set) of Artifacts from the Spike Mark.
-    private Path scorePreload;
-    private PathChain grabPickup1, scorePickup1, grabPickup2, scorePickup2, grabPickup3, scorePickup3;
+    public enum PathState{
+        //STARTPosition -->EndPosition
 
-    public void buildPaths() {
-        /* This is our scorePreload path. We are using a BezierLine, which is a straight line. */
-        scorePreload = new Path(new BezierLine(startPose, scorePose));
-        scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading());
+        DETECTAPRILTAG,
 
-    /* Here is an example for Constant Interpolation
-    scorePreload.setConstantInterpolation(startPose.getHeading()); */
-
-        /* This is our grabPickup1 PathChain. We are using a single path with a BezierLine, which is a straight line. */
-        grabPickup1 = follower.pathBuilder()
-                .addPath(new BezierLine(scorePose, pickup1Pose))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), pickup1Pose.getHeading())
-                .build();
-
-        /* This is our scorePickup1 PathChain. We are using a single path with a BezierLine, which is a straight line. */
-        scorePickup1 = follower.pathBuilder()
-                .addPath(new BezierLine(pickup1Pose, scorePose))
-                .setLinearHeadingInterpolation(pickup1Pose.getHeading(), scorePose.getHeading())
-                .build();
-
-        /* This is our grabPickup2 PathChain. We are using a single path with a BezierLine, which is a straight line. */
-        grabPickup2 = follower.pathBuilder()
-                .addPath(new BezierLine(scorePose, pickup2Pose))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), pickup2Pose.getHeading())
-                .build();
-
-        /* This is our scorePickup2 PathChain. We are using a single path with a BezierLine, which is a straight line. */
-        scorePickup2 = follower.pathBuilder()
-                .addPath(new BezierLine(pickup2Pose, scorePose))
-                .setLinearHeadingInterpolation(pickup2Pose.getHeading(), scorePose.getHeading())
-                .build();
-
-        /* This is our grabPickup3 PathChain. We are using a single path with a BezierLine, which is a straight line. */
-        grabPickup3 = follower.pathBuilder()
-                .addPath(new BezierLine(scorePose, pickup3Pose))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), pickup3Pose.getHeading())
-                .build();
-
-        /* This is our scorePickup3 PathChain. We are using a single path with a BezierLine, which is a straight line. */
-        scorePickup3 = follower.pathBuilder()
-                .addPath(new BezierLine(pickup3Pose, scorePose))
-                .setLinearHeadingInterpolation(pickup3Pose.getHeading(), scorePose.getHeading())
-                .build();
+        START_SHOOTPRELOAD,
+        SORTPRELOAD,
+        SHOOTPRELOAD_STARTINTAKEGPP,
+        STARTINTAKEGPP_ENDINTAKEGPP,
+        ENDINTAKEGPP_SHOOTGPP,
+        SHOOTGPP_STARTINTAKEPGP,
+        STARTINTAKEPGP_ENDINTAKEPGP,
+        ENDINTAKEPGP_SHOOTPGP,
+        SHOOTPGP_STARTINTAKEPPG,
+        STARTINTAKEPPG_ENDINTAKEPPG,
+        ENDINTAKEPPG_SHOOTPPG,
+        DONE,
     }
 
-    public void autonomousPathUpdate() {
-        switch (pathState) {
-            case 0:
-                follower.followPath(scorePreload);
-                setPathState(1);
-                break;
-            case 1:
+    PathState pathState;
+    private final Pose startPose = new Pose(20.000, 123.000, Math.toRadians (143));
+    private final Pose shootPreloadPose = new Pose (35.49,107.99,Math.toRadians(143));
+    private final Pose startIntakeGPPPose = new Pose (50.35,84.07,Math.toRadians(180));
+    private final Pose endIntakeGPPPose = new Pose (19.05,84.58,Math.toRadians(180));
+    private final Pose shootGPPPose = new Pose (60.47,83.97,Math.toRadians(180));
+    private final Pose shootPPGstartIntakePGPcontrolPoint = new Pose (64.71,64.71,Math.toRadians(180));
+    private final Pose startIntakePGPPose = new Pose (42.921,59.73,Math.toRadians(180));
+    private final Pose endIntakePGPPose = new Pose (22.158,59.81,Math.toRadians(180));
+    private final Pose shootPGPPose = new Pose (60.92,84.04,Math.toRadians(190));
+    private final Pose startIntakePPG = new Pose (43.122,35.70);
+    private final Pose endIntakePPG = new Pose (21.81,35.56, Math.toRadians(180));
+    private final Pose shootPPG = new Pose (62.42,107.33, Math.toRadians(180));
 
-            /* You could check for
-            - Follower State: "if(!follower.isBusy()) {}"
-            - Time: "if(pathTimer.getElapsedTimeSeconds() > 1) {}"
-            - Robot Position: "if(follower.getPose().getX() > 36) {}"
-            */
+    private PathChain startPos_ShootPreloadPos, shootPreload_startIntakeGPP, startIntakeGPP_endIntakeGPP;
+    private PathChain endIntakeGPP_shootGPP, shootGPP_startIntakePGP, startIntakePGP_endIntakePGP;
+    private PathChain endIntakePGP_shootPGP, shootPGP_startIntakePPG,startIntakePPG_endIntakePPG;
+    private PathChain endIntakePPG_shootPPG;
 
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
-                if (!follower.isBusy()) {
-                    /* Score Preload */
+    public void buildPaths(){
+        //put in coordinates for start pose and end pose
+        startPos_ShootPreloadPos = follower.pathBuilder()
+                .addPath(new BezierLine(startPose, shootPreloadPose))
+                .setLinearHeadingInterpolation(startPose.getHeading(), shootPreloadPose.getHeading()).build();
+        shootPreload_startIntakeGPP = follower.pathBuilder()
+                .addPath(new BezierLine (shootPreloadPose, startIntakeGPPPose))
+                .setLinearHeadingInterpolation(shootPreloadPose.getHeading(), startIntakeGPPPose.getHeading())
+                .build();
+        startIntakeGPP_endIntakeGPP = follower.pathBuilder()
+                .addPath(new BezierLine (startIntakeGPPPose, endIntakeGPPPose))
+                .setLinearHeadingInterpolation(startIntakeGPPPose.getHeading(), endIntakeGPPPose.getHeading())
+                .build();
+        endIntakeGPP_shootGPP = follower.pathBuilder()
+                .addPath(new BezierLine (endIntakeGPPPose, shootGPPPose))
+                .setLinearHeadingInterpolation(endIntakeGPPPose.getHeading(), shootGPPPose.getHeading())
+                .build();
+        shootGPP_startIntakePGP = follower.pathBuilder()
+                .addPath(new BezierCurve(shootGPPPose, shootPPGstartIntakePGPcontrolPoint,startIntakePGPPose))
+                .setLinearHeadingInterpolation(shootGPPPose.getHeading(), startIntakePGPPose.getHeading())
+                .build();
+        startIntakePGP_endIntakePGP = follower.pathBuilder()
+                .addPath(new BezierLine (startIntakePGPPose, endIntakePGPPose))
+                .setLinearHeadingInterpolation(startIntakePGPPose.getHeading(), endIntakePGPPose.getHeading())
+                .build();
+        endIntakePGP_shootPGP = follower.pathBuilder()
+                .addPath(new BezierLine (endIntakePGPPose, shootPGPPose))
+                .setLinearHeadingInterpolation(endIntakePGPPose.getHeading(), shootPGPPose.getHeading())
+                .build();
+        shootPGP_startIntakePPG = follower.pathBuilder()
+                .addPath(new BezierLine (shootPGPPose, startIntakePPG))
+                .setLinearHeadingInterpolation(shootPGPPose.getHeading(), startIntakePPG.getHeading())
+                .build();
+        startIntakePPG_endIntakePPG = follower.pathBuilder()
+                .addPath(new BezierLine (startIntakePPG, endIntakePPG))
+                .setLinearHeadingInterpolation(startIntakePPG.getHeading(), endIntakePPG.getHeading())
+                .build();
+        endIntakePPG_shootPPG = follower.pathBuilder()
+                .addPath(new BezierLine (endIntakePPG, shootPPG))
+                .setLinearHeadingInterpolation(endIntakePPG.getHeading(), shootPPG.getHeading())
+                .build();
 
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
-                    follower.followPath(grabPickup1, true);
-                    setPathState(2);
+
+    }
+    public void statePathUpdate(){
+        switch(pathState){
+
+            case DETECTAPRILTAG:
+                LLResult result = limelight.getLatestResult();
+                List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
+                intake.setIntakePower(-0.25);
+
+                double maxPosition=-10000;
+                for (LLResultTypes.FiducialResult fiducial : fiducials) {
+                    int id = fiducial.getFiducialId(); // The ID number of the fiducial
+                    double x = fiducial.getTargetXDegrees(); // Where it is (left-right)
+
+                    if (x>maxPosition){
+                        maxPosition = x;
+                        idb =id;
+                    }
+                }
+                telemetry.addData("Fiducial", idb);
+                if (idb ==21){
+                    opModeTimer.resetTimer();
+                    ppgGoToPosition =0;
+                    pgpGoToPosition =100;
+                    gppGoToPosition= 200;
+                    turret.switchTurretState();
+                    spindex.goToPosition(gppGoToPosition);
+                    follower.followPath(startPos_ShootPreloadPos);
+                    setPathState(PathState.START_SHOOTPRELOAD);
+
+                }
+                if (idb ==22){
+                    turret.switchTurretState();
+                    opModeTimer.resetTimer();
+                    ppgGoToPosition =200;
+                    pgpGoToPosition =0;
+                    gppGoToPosition= 100;
+                    spindex.goToPosition(gppGoToPosition);
+                    follower.followPath(startPos_ShootPreloadPos);
+                    setPathState(PathState.START_SHOOTPRELOAD);
+
+                }
+                if (idb ==23){
+                    turret.switchTurretState();
+                    opModeTimer.resetTimer();
+                    ppgGoToPosition =100;
+                    pgpGoToPosition =200;
+                    gppGoToPosition= 0;
+                    spindex.goToPosition(gppGoToPosition);
+                    follower.followPath(startPos_ShootPreloadPos);
+                    setPathState(PathState.START_SHOOTPRELOAD);
+
                 }
                 break;
-            case 2:
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the pickup1Pose's position */
-                if (!follower.isBusy()) {
-                    /* Grab Sample */
 
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample */
-                    follower.followPath(scorePickup1, true);
-                    setPathState(3);
-                }
-                break;
-            case 3:
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
-                if (!follower.isBusy()) {
-                    /* Score Sample */
 
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
-                    follower.followPath(grabPickup2, true);
-                    setPathState(4);
-                }
-                break;
-            case 4:
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the pickup2Pose's position */
-                if (!follower.isBusy()) {
-                    /* Grab Sample */
 
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample */
-                    follower.followPath(scorePickup2, true);
-                    setPathState(5);
-                }
-                break;
-            case 5:
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
-                if (!follower.isBusy()) {
-                    /* Score Sample */
 
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
-                    follower.followPath(grabPickup3, true);
-                    setPathState(6);
-                }
-                break;
-            case 6:
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the pickup3Pose's position */
-                if (!follower.isBusy()) {
-                    /* Grab Sample */
+            case  START_SHOOTPRELOAD:
 
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample */
-                    follower.followPath(scorePickup3, true);
-                    setPathState(7);
-                }
-                break;
-            case 7:
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
+                intake.shootBalls();
+                spindex.setSpindexPower(1);
+                intake.setIntakePower(1);
+
                 if (!follower.isBusy()) {
-                    /* Set the state to a Case we won't use or define, so it just stops running an new paths */
-                    setPathState(-1);
+
+                   if(opModeTimer.getElapsedTimeSeconds()>5) {
+                       opModeTimer.resetTimer();
+                       follower.followPath(shootPreload_startIntakeGPP);
+                       setPathState(PathState.SHOOTPRELOAD_STARTINTAKEGPP);
+                   }
+                }
+
+                break;
+            case SHOOTPRELOAD_STARTINTAKEGPP:
+                spindex.goToPosition(0);
+                intake.intakeBalls();
+
+                if (!follower.isBusy()){
+                    opModeTimer.resetTimer();
+                    follower.followPath(startIntakeGPP_endIntakeGPP);
+                    intake.setIntakePower(-0.25);
+                    setPathState(STARTINTAKEGPP_ENDINTAKEGPP);
+
                 }
                 break;
+            case STARTINTAKEGPP_ENDINTAKEGPP:
+                spindex.goToPosition(0);
+                intake.intakeBalls();
+                if (!follower.isBusy()){
+                    opModeTimer.resetTimer();
+                    spindex.goToPosition(pgpGoToPosition);
+                    follower.followPath(endIntakeGPP_shootGPP);
+                    setPathState(PathState.ENDINTAKEGPP_SHOOTGPP);
+                }
+                break;
+                
+            case ENDINTAKEGPP_SHOOTGPP:
+                spindex.goToPosition(gppGoToPosition);
+                if (!follower.isBusy()){
+                    intake.shootBalls();
+                    spindex.setSpindexPower(1);
+                    if (opModeTimer.getElapsedTimeSeconds()>3){
+                        opModeTimer.resetTimer();
+                        follower.followPath(shootGPP_startIntakePGP);
+                        setPathState(PathState.SHOOTGPP_STARTINTAKEPGP);
+
+                    }
+                }
+                break;
+
+            case SHOOTGPP_STARTINTAKEPGP:
+                spindex.goToPosition(0);
+                intake.intakeBalls();
+                if (!follower.isBusy()){
+                    opModeTimer.resetTimer();
+                    follower.followPath(startIntakePGP_endIntakePGP);
+                    setPathState(PathState.STARTINTAKEPGP_ENDINTAKEPGP);
+                }
+                break;
+            case STARTINTAKEPGP_ENDINTAKEPGP:
+                spindex.goToPosition(0);
+                intake.intakeBalls();
+                if (!follower.isBusy()){
+                    opModeTimer.resetTimer();
+                    spindex.goToPosition(pgpGoToPosition);
+                    follower.followPath(endIntakePGP_shootPGP);
+                    setPathState(PathState.ENDINTAKEPGP_SHOOTPGP);
+                }
+                break;
+
+            case ENDINTAKEPGP_SHOOTPGP:
+                spindex.goToPosition(pgpGoToPosition);
+                if (!follower.isBusy()){
+                    intake.shootBalls();
+                    spindex.setSpindexPower(1);
+                    if (opModeTimer.getElapsedTimeSeconds()>3){
+                        opModeTimer.resetTimer();
+                        follower.followPath(shootPGP_startIntakePPG);
+                        setPathState(PathState.SHOOTPGP_STARTINTAKEPPG);
+
+                    }
+                }
+                break;
+            case SHOOTPGP_STARTINTAKEPPG:
+                spindex.goToPosition(0);
+                intake.intakeBalls();
+                if (!follower.isBusy()){
+                    opModeTimer.resetTimer();
+                    follower.followPath(startIntakePPG_endIntakePPG);
+                    setPathState(PathState.STARTINTAKEPPG_ENDINTAKEPPG);
+                }
+                break;
+            case STARTINTAKEPPG_ENDINTAKEPPG:
+                spindex.goToPosition(0);
+                intake.intakeBalls();
+                if (!follower.isBusy()){
+                    intake.shootBalls();
+                    opModeTimer.resetTimer();
+                    spindex.goToPosition(ppgGoToPosition);
+                    follower.followPath(endIntakePPG_shootPPG);
+                    setPathState(PathState.ENDINTAKEPPG_SHOOTPPG);
+                }
+                break;
+            case ENDINTAKEPPG_SHOOTPPG:
+                spindex.goToPosition(ppgGoToPosition);
+                if (!follower.isBusy()){
+                    spindex.setSpindexPower(1);
+                    if (opModeTimer.getElapsedTimeSeconds()>3){
+                        opModeTimer.resetTimer();
+
+                        setPathState(PathState.DONE);
+
+                    }
+                }
+                break;
+
+            case DONE:
+                telemetry.addLine("Finished");
+                break;
+
+
+            default:
+                telemetry.addLine("No state COmmanded");
+                break;
+
         }
     }
-
-    /**
-     * These change the states of the paths and actions. It will also reset the timers of the individual switches
-     **/
-    public void setPathState(int pState) {
-        pathState = pState;
+    public void setPathState(PathState newState){
+        pathState=newState;
         pathTimer.resetTimer();
     }
 
-    /**
-     * This is the main loop of the OpMode, it will run repeatedly after clicking "Play".
-     **/
+
+
     @Override
-    public void loop() {
-
-        // These loop the movements of the robot, these must be called continuously in order to work
-        follower.update();
-        autonomousPathUpdate();
-
-        // Feedback to Driver Hub for debugging
-        telemetry.addData("path state", pathState);
-        telemetry.addData("x", follower.getPose().getX());
-        telemetry.addData("y", follower.getPose().getY());
-        telemetry.addData("heading", follower.getPose().getHeading());
-        telemetry.update();
-    }
-
-    /**
-     * This method is called once at the init of the OpMode.
-     **/
-    @Override
-    public void init() {
+    public void init(){
+        pathState = PathState.DETECTAPRILTAG;
         pathTimer = new Timer();
-        opmodeTimer = new Timer();
-        opmodeTimer.resetTimer();
+        opModeTimer = new Timer();
+
+        intake = new Intake(hardwareMap);
+        spindex = new Spindex (hardwareMap);
+        turret = new Turret(hardwareMap, "blue",40,false);
+
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        limelight.setPollRateHz(100); // This sets how often we ask Limelight for data (100 times per second)
+        limelight.start();
+        limelight.pipelineSwitch(0);
 
 
         follower = Constants.createFollower(hardwareMap);
         buildPaths();
-        follower.setStartingPose(startPose);
+        follower.setPose(startPose);
 
     }
 
-    /**
-     * This method is called continuously after Init while waiting for "play".
-     **/
-    @Override
-    public void init_loop() {
-    }
+    public void start(){
+        opModeTimer.resetTimer();
+        setPathState(pathState);
 
-    /**
-     * This method is called once at the start of the OpMode.
-     * It runs all the setup actions, including building paths and starting the path system
-     **/
-    @Override
-    public void start() {
-        opmodeTimer.resetTimer();
-        setPathState(0);
     }
-
-    /**
-     * We do not use this because everything should automatically disable
-     **/
     @Override
-    public void stop() {
+    public void loop(){
+        follower.update();
+        double x = follower.getPose().getX();
+        double y = follower.getPose().getY();
+        double h = Math.toDegrees(follower.getPose().getHeading());
+        turret.setFlyWheelSpeed(-1200);
+
+        telemetry.addData("X:", x);
+        telemetry.addData("Y:", y);
+        telemetry.addData("H:", h);
+
+
+
+        turret.autoHoodAnglelut(x, y);
+
+        turret.aimTurretOriginal(x, y, h);
+
+
+        statePathUpdate();
+        telemetry.addData("pathState", pathState.toString());
+        telemetry.addData ("turret Target", turret.getTargetBlue(x,y));
     }
 }
+
 
 

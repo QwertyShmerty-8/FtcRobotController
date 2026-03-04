@@ -3,147 +3,134 @@ package org.firstinspires.ftc.teamcode.Autos;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
-import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
+import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
-import org.firstinspires.ftc.teamcode.Helperfunctions.Fullfieldshootingvalues;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Spindex;
 import org.firstinspires.ftc.teamcode.subsystems.Turret;
+import org.firstinspires.ftc.teamcode.subsystems.aDrivetrain;
 
-@Autonomous(name = "simple Far Red Auto")
+
+@Autonomous
 
 public class simpleFarRedAuto extends OpMode {
 
-    Intake intake;
-    Spindex spindex;
-    Turret turret;
-    Fullfieldshootingvalues shootingvalues;
-
-
-
     private Follower follower;
-    private Timer pathTimer, actionTimer, opmodeTimer;
+    private Timer pathTimer, opModeTimer;
+    private Intake intake;
+    private Spindex spindex;
+    private Turret turret;
 
-    private int pathState;
-    private final Pose startPose = new Pose(87.922330097, 8.233009708737839, Math.toRadians(90)); // Start Pose of our robot.
-    private final Pose shootPose = new Pose(87.845, 32.61866, Math.toRadians(90));
-    // Lowest (Third Set) of Artifacts from the Spike Mark.
-    private Path scorePosition;
-    private PathChain goOffline;
+    public enum PathState{
+        //STARTPosition -->EndPosition
 
-    public void buildPaths() {
-        scorePosition = new Path(new BezierLine(startPose, shootPose));
-        scorePosition.setLinearHeadingInterpolation(startPose.getHeading(), shootPose.getHeading());
-
-
-
-
-
-
-
+        SHOOTPRELOAD,
+        SHOOTPRELOADTOEND,
+        ENDPOSITION,
     }
 
-    public void autonomousPathUpdate() {
-        switch (pathState) {
-            case 0:
-                follower.followPath(scorePosition);
-                setPathState(1);
-                break;
-            case 1:
-                if (!follower.isBusy()){
-                    follower.holdPoint(shootPose);
-                    setPathState(-1);
-                }
-            /* You could check for
-            - Follower State: "if(!follower.isBusy()) {}"
-            - Time: "if(pathTimer.getElapsedTimeSeconds() > 1) {}"
-            - Robot Position: "if(follower.getPose().getX() > 36) {}"
-            */
+    PathState pathState;
+    private final Pose startPose = new Pose(88.15,8.000, Math.toRadians (90));
+    private final Pose endPose = new Pose (88.62,33.43,Math.toRadians(90));
+    private PathChain driveStartPosEndPos;
 
+    public void buildPaths(){
+        //put in coordinates for start pose and end pose
+        driveStartPosEndPos = follower.pathBuilder()
+                .addPath(new BezierLine(startPose, endPose))
+                .setLinearHeadingInterpolation(startPose.getHeading(), endPose.getHeading()).build();
+    }
+    public void statePathUpdate(){
+        switch(pathState){
+            case  SHOOTPRELOAD:
+                turret.setFlyWheelSpeed(-1200);
+
+                if(turret.getFlyWheelSpeed()<0) {
+                    intake.shootBalls();
+                    intake.setIntakePower(1);
+                    spindex.setSpindexPower(1);
+                    opModeTimer.resetTimer();
+                    setPathState(PathState.SHOOTPRELOADTOEND);
+                }
+                break;
+            case SHOOTPRELOADTOEND:
+
+                if (opModeTimer.getElapsedTimeSeconds()>2){
+                    spindex.setSpindexPower(0);
+                    follower.followPath(driveStartPosEndPos);
+                    opModeTimer.resetTimer();
+                    setPathState(PathState.ENDPOSITION);
+                }
+                break;
+            case ENDPOSITION:
+                if (!follower.isBusy()){
+                    follower.holdPoint(endPose);
+                    telemetry.addLine("Finished");
+                }
+                break;
+
+            default:
+                telemetry.addLine("No state Commanded");
                 break;
 
         }
     }
-
-    /**
-     * These change the states of the paths and actions. It will also reset the timers of the individual switches
-     **/
-    public void setPathState(int pState) {
-        pathState = pState;
+    public void setPathState(PathState newState){
+        pathState=newState;
         pathTimer.resetTimer();
     }
 
-    /**
-     * This is the main loop of the OpMode, it will run repeatedly after clicking "Play".
-     **/
+
+
     @Override
-    public void loop() {
+    public void init(){
 
-        // These loop the movements of the robot, these must be called continuously in order to work
-        turret.aimTurretOriginal(follower.getPose().getX(),follower.getPose().getY(),follower.getPose().getHeading());
-        turret.setHoodAngle(shootingvalues.hoodanglelut(follower.getPose().getX(), follower.getPose().getY()));
-        turret.setFlyWheelSpeed(shootingvalues.flywheelspeedlut(follower.getPose().getX(), follower.getPose().getY()));
-
-        follower.update();
-        autonomousPathUpdate();
-
-        // Feedback to Driver Hub for debugging
-        telemetry.addData("path state", pathState);
-        telemetry.addData("x", follower.getPose().getX());
-        telemetry.addData("y", follower.getPose().getY());
-        telemetry.addData("heading", follower.getPose().getHeading());
-        telemetry.update();
-    }
-
-    /**
-     * This method is called once at the init of the OpMode.
-     **/
-    @Override
-    public void init() {
+        pathState=PathState.SHOOTPRELOAD;
+        pathTimer = new Timer();
+        opModeTimer = new Timer();
 
         intake = new Intake(hardwareMap);
         spindex = new Spindex (hardwareMap);
-        turret = new Turret(hardwareMap, "red",90);
-        shootingvalues = new Fullfieldshootingvalues("red");
-        pathTimer = new Timer();
-        opmodeTimer = new Timer();
-        opmodeTimer.resetTimer();
+        turret = new Turret(hardwareMap, "red",0,true);
 
 
         follower = Constants.createFollower(hardwareMap);
         buildPaths();
-        follower.setStartingPose(startPose);
+        follower.setPose(startPose);
 
     }
 
-    /**
-     * This method is called continuously after Init while waiting for "play".
-     **/
-    @Override
-    public void init_loop() {
-    }
+    public void start(){
+        opModeTimer.resetTimer();
+        setPathState(pathState);
 
-    /**
-     * This method is called once at the start of the OpMode.
-     * It runs all the setup actions, including building paths and starting the path system
-     **/
-    @Override
-    public void start() {
-        opmodeTimer.resetTimer();
-        setPathState(0);
     }
-
-    /**
-     * We do not use this because everything should automatically disable
-     **/
     @Override
-    public void stop() {
+    public void loop(){
+        double x = follower.getPose().getX();
+        double y = follower.getPose().getY();
+        double h = follower.getPose().getHeading();
+
+        telemetry.addData("X:", x);
+        telemetry.addData("Y:", y);
+        telemetry.addData("H:", h);
+
+
+
+        turret.autoHoodAnglelut(x, y);
+
+        turret.aimTurretOriginal(x, y, h);
+
+        follower.update();
+        statePathUpdate();
+        telemetry.addData("pathState", pathState.toString());
     }
 }
+
 
 

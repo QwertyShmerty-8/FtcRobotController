@@ -11,20 +11,18 @@ import com.pedropathing.paths.PathChain;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.robotcore.external.Supplier;
 import org.firstinspires.ftc.teamcode.Helperfunctions.Fullfieldshootingvalues;
+import org.firstinspires.ftc.teamcode.Helperfunctions.fancyButton;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
-import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
+import org.firstinspires.ftc.teamcode.subsystems.aDrivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Spindex;
 import org.firstinspires.ftc.teamcode.subsystems.Turret;
-import org.firstinspires.ftc.teamcode.subsystems.otos;
 
 @Config
-@TeleOp(name="Goal Red Drive")
+@TeleOp(name="goal Red Drive")
 public class goalRedTeleop extends OpMode {
 
     private Fullfieldshootingvalues shootingvalues;
@@ -33,8 +31,15 @@ public class goalRedTeleop extends OpMode {
     private Spindex spindex;
     SparkFunOTOS otos;
     private Turret turret;
+    private fancyButton hoodAdjustOnToggle;
+    private fancyButton slowModeToggle;
+    private fancyButton turretFreezeToggle;
+    private fancyButton sortModeToggle;
+    private fancyButton holdModeToggle;
+    private Boolean inHoldMode;
 
-    private Drivetrain drive;
+
+    private aDrivetrain drive;
 
     private Follower follower;
     public static Pose startingPose = new Pose(123,123,Math.toRadians(35));
@@ -49,9 +54,8 @@ public class goalRedTeleop extends OpMode {
     public void init(){
         intake = new Intake(hardwareMap);
         spindex = new Spindex (hardwareMap);
-        turret = new Turret(hardwareMap, "red",35);
-        shootingvalues = new Fullfieldshootingvalues("red");
-        drive = new Drivetrain (hardwareMap);
+        turret = new Turret(hardwareMap, "red",0,true);
+        drive = new aDrivetrain(hardwareMap);
 
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(startingPose == null ? new Pose() : startingPose);
@@ -59,11 +63,15 @@ public class goalRedTeleop extends OpMode {
         telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
 
 
-        turret.setHoodAngle(1);
-
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
-
+        shootingvalues = new Fullfieldshootingvalues("red");
+        hoodAdjustOnToggle = new fancyButton( fancyButton.PressType.Toggle);
+        slowModeToggle = new fancyButton(fancyButton.PressType.Toggle);
+        turretFreezeToggle = new fancyButton (fancyButton.PressType.Toggle);
+        sortModeToggle = new fancyButton (fancyButton.PressType.Toggle);
+        holdModeToggle = new fancyButton (fancyButton.PressType.Toggle);
+        inHoldMode = false;
 
 
 
@@ -72,98 +80,93 @@ public class goalRedTeleop extends OpMode {
     }
     public void start(){
         follower.startTeleopDrive();
-        turret.setHoodAngle(1);
         follower.update();
     }
-
     public void loop(){
+        hoodAdjustOnToggle.checkStatus(gamepad1.a);
+
+        if (hoodAdjustOnToggle.startPress){
+            turret.switchHoodAdjust();
+        }
+        telemetry.addData ("Hood Adjust", turret.getHoodAdjustOn());
+
+
+        turretFreezeToggle.checkStatus(gamepad2.right_stick_button);
+        if (turretFreezeToggle.startPress){
+            turret.switchTurretState();
+        }
+        telemetry.addData ("TurretOn? ", turret.getTurretOn());
+
+        slowModeToggle.checkStatus(gamepad2.touchpad);
+        if (slowModeToggle.startPress){
+            drive.switchSlowmode();
+        }
+        telemetry.addData ("Slowmode? ", drive.getSlowmode());
+
+
+        if (hoodAdjustOnToggle.startPress){
+            turret.switchHoodAdjust();
+        }
+        telemetry.addData ("Hood Adjust", turret.getHoodAdjustOn());
+
+        if (sortModeToggle.startPress){
+            intake.switchSortMode();
+        }
+
+        telemetry.addData ("SortMode?", intake.getSortMode());
+        intake.configureSortMode();
+
+        holdModeToggle.checkStatus(gamepad2.left_bumper||gamepad2.right_bumper);
+
+        if (holdModeToggle.startPress&&inHoldMode==false){
+            follower.holdPoint(follower.getPose());
+            inHoldMode=true;
+            drive.switchHoldMode();
+        } else if(holdModeToggle.startPress&& inHoldMode ){
+            follower.breakFollowing();
+            inHoldMode = false;
+            drive.switchHoldMode();
+        }
+        telemetry.addData ("Holding Position?", drive.getHoldMode());
 
         follower.update();
 
-        double distanceBlue = Math.sqrt(follower.getPose().getX()*follower.getPose().getX() + (144-follower.getPose().getY())*(144-follower.getPose().getY()));
 
 
         drive.driveCA(gamepad1.right_stick_x, gamepad1.right_stick_y, gamepad1.left_stick_x, gamepad1.left_trigger, gamepad1.right_trigger);
+        if(gamepad1.left_trigger>0.25){
+            intake.shootBalls();
+        }
+        if (gamepad1.right_trigger>0.25){
+            intake.intakeBalls();
+        }
+        if (gamepad1.right_bumper){
+            intake.shootBalls();
+
+        }
+        if (gamepad2.a){
+            intake.setIntakePower(-1);
+        } else if(gamepad1.right_trigger>0.25){
+            intake.setIntakePower(1);
+        }
+
+        //Gamepd2 controls
+        if (gamepad2.left_trigger>0.25){
+            spindex.setSpindexPower(1);
+        } else if (gamepad2.right_trigger>0.25){
+            spindex.setSpindexPower(-1);
+        }
+
+        if (gamepad2.left_stick_button){
+            follower.setPose(resetPose);
+        }
+
+
+        turret.autoHoodAnglelut(follower.getPose().getX(), follower.getPose().getY());
 
         turret.aimTurretOriginal(follower.getPose().getX(), follower.getPose().getY(), Math.toDegrees(follower.getPose().getHeading()));
 
-        if (gamepad1.left_trigger>0.25) {
-            intake.intakeBalls();
-        }
-        if (gamepad1.right_trigger>0.25) {
-            intake.shootBalls();
-        }
-        if (gamepad1.left_bumper){
-            intake.reverseIntakeDirection();
-        }else{
-            intake.forwardIntakeDirection();
-        }
-        if (gamepad2.a){
-            turret.enableTurret();
-        }
-        if (gamepad2.b){
-            turret.disableTurret();
-        }
-        telemetry.addData("Turret on?", turret.getTurretOn());
-        telemetry.addData("Driver 2 controls: square for spindex, left bumper to reset pose, a to toggle turret ", false);
-        if (gamepad2.left_trigger>0.25) {
-            spindex.setSpindexPower(0.7);
-        } else if (gamepad2.right_trigger>0.25){
-            spindex.setSpindexPower(-0.7);
-        }  else{
-            spindex.setSpindexPower(0);
-        }
 
-        if (gamepad2.dpad_up){
-            turret.setFlyWheelSpeed(-1050);
-            turret.setHoodAngle(0.36);
-        }else if (gamepad2.dpad_down){
-            turret.setFlyWheelSpeed(-1200);
-            turret.setHoodAngle(0.92);
-        }else{
-            turret.setHoodAngle(shootingvalues.hoodanglelut(follower.getPose().getX(), follower.getPose().getY()));
-            turret.setFlyWheelSpeed(shootingvalues.flywheelspeedlut(follower.getPose().getX(), follower.getPose().getY()));
-        }
-
-       /* if (gamepad2.dpad_up){
-            turret.setFlyWheelSpeed(-1050);
-            turret.setHoodAngle(0.36);
-        }else if (gamepad2.dpad_down){
-            turret.setFlyWheelSpeed(-1200);
-            turret.setHoodAngle(0.92);
-        }else{
-            turret.setHoodAngle(shootingvalues.hoodanglelut(follower.getPose().getX(), follower.getPose().getY()));
-            turret.setFlyWheelSpeed(shootingvalues.flywheelspeedlut(follower.getPose().getX(), follower.getPose().getY()));
-        }*/
-        if (gamepad2.y) {
-            follower.setStartingPose(resetPose);
-        }
-
-        double hoodAnglePosition = shootingvalues.hoodanglelut(follower.getPose().getX(), follower.getPose().getY());
-        double flyWheelPosition =shootingvalues.flywheelspeedlut(follower.getPose().getX(), follower.getPose().getY());
-        telemetry.addData("fly wheel ideal speed", flyWheelPosition);
-        telemetry.addData("hood angle ideal", hoodAnglePosition);
-        telemetry.addData("hood angle ideal", hoodAnglePosition);
-        telemetry.addData("hood angle ideal",Math.sqrt((144-follower.getPose().getX())*(144-follower.getPose().getX()) +(144-follower.getPose().getY())*(144-follower.getPose().getY())));
-
-
-
-
-        turret.updateFlywheelCoefficents();
-
-
-        telemetry.addData("Fly wheel Speed", turret.getFlyWheelSpeed());
-        telemetry.addData("Fly wheel Speed Target", shootingvalues.flywheelspeedlut(follower.getPose().getX(), follower.getPose().getY()));
-
-
-
-
-        telemetry.addData("Hood Angle", turret.getHoodAngle());
-
-
-
-
-        telemetry.update();
 
 
     }
