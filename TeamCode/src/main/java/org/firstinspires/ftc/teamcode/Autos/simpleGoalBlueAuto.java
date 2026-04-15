@@ -56,7 +56,7 @@ public class simpleGoalBlueAuto extends OpMode {
     public void statePathUpdate(){
         switch(pathState){
             case  STARTPOSETOSHOOTPOSE:
-                turret.setFlyWheelSpeed(-1200);
+                turret.setFlywheelVelocity(-1200);
                 follower.followPath(driveStartPosShootPos);
                 opModeTimer.resetTimer();
                 setPathState(PathState.SHOOT);
@@ -103,7 +103,7 @@ public class simpleGoalBlueAuto extends OpMode {
 
         intake = new Intake(hardwareMap);
         spindex = new Spindex (hardwareMap);
-        turret = new Turret(hardwareMap, "blue",0,true);
+        turret = new Turret(hardwareMap, "blue",follower,true);
 
 
         follower = Constants.createFollower(hardwareMap);
@@ -120,6 +120,7 @@ public class simpleGoalBlueAuto extends OpMode {
     @Override
     public void loop(){
         follower.update();
+        turret.updateFollower(follower);
         double x = follower.getPose().getX();
         double y = follower.getPose().getY();
         double h = follower.getPose().getHeading();
@@ -130,14 +131,12 @@ public class simpleGoalBlueAuto extends OpMode {
 
 
 
-        turret.autoHoodAnglelut(x, y);
 
-        turret.aimTurret(x, y, h);
 
 
         statePathUpdate();
         telemetry.addData("pathState", pathState.toString());
-        telemetry.addData ("turret Target", turret.getTargetBlue(x,y));
+        telemetry.addData ("turret Target", turret.getTargetAngle(x,y));
     }
 }
 

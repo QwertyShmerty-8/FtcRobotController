@@ -1,18 +1,16 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-import static org.firstinspires.ftc.teamcode.myConstants.Turret.KdTurret;
-import static org.firstinspires.ftc.teamcode.myConstants.Turret.KiTurret;
-import static org.firstinspires.ftc.teamcode.myConstants.Turret.KpTurret;
-import static org.firstinspires.ftc.teamcode.myConstants.Turret.Pflywheel;
-import static org.firstinspires.ftc.teamcode.myConstants.Turret.Iflywheel;
-import static org.firstinspires.ftc.teamcode.myConstants.Turret.Dflywheel;
-import static org.firstinspires.ftc.teamcode.myConstants.Turret.Fflywheel;
-import static org.firstinspires.ftc.teamcode.myConstants.Turret.TURRET_MAX;
-import static org.firstinspires.ftc.teamcode.myConstants.Turret.TURRET_MIN;
+
+
+import static org.firstinspires.ftc.teamcode.teleop.intakeTest.offsetValueEncoder;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Vector;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -26,296 +24,348 @@ import org.firstinspires.ftc.teamcode.Helperfunctions.Fullfieldshootingvalues;
 @Config
 
 public class Turret {
+    double turretAngleAdjust;
 
     DcMotorEx flyWheel;
     Servo hood;
     DcMotor turretMotor;
     Fullfieldshootingvalues values;
+    Follower follower;
+
+    AnalogInput turretEncoder;
 
     boolean isBlue;
     boolean turretOn;
     boolean hoodOn;
+    boolean flywheelOn = true;
+    boolean movingWhileShooting= false;
     double startTurretPosition;
 
+    public static double Kpturret=0.1;
+    public static double Kiturret;
+    public static double Kdturret;
+    public static double Kfturret=0.08;
 
 
+    public static double Kp= 0.1;
+    public static double KvBearing= 0.00025;
+    public static double KvTurn = 0.005;
+    public static double flywheeltarget;
+    public static double kpflywheel;
+    double lastErrorTurret;
+    double lastErrorFlywheel;
 
 
     private double lastError = 0;
     private double integralSum = 0;
     private final double dt = 0.02;
-    PIDFCoefficients flyWheelCoefficients = new PIDFCoefficients (Pflywheel,Iflywheel,Dflywheel,Fflywheel);
 
-    //aimAngleBlue = Math.toDegrees((Math.PI / 2) + Math.atan(pos.x / (144 - pos.y)));
+    private double turretOffset =-22;
 
-    //aimAngleRed = Math.toDegrees(Math.atan((144 - pos.y) / (144 - pos.x)));
-    // turretDeviationNeeded = aimAngleBlue - pos.h;
+    private final double TARGET_X_BLUE=0;
+    private final double TARGET_Y_BLUE=144;
 
-    public Turret(HardwareMap hardwareMap,  String goalColor, int x, boolean turretOnx){
+    private final double TARGET_X_RED=144;
+
+
+    private final double TARGET_Y_RED=144;
+
+
+    public Turret(HardwareMap hardwareMap, String goalColor, Follower followerx, boolean turretOnx) {
+        follower = followerx;
         turretMotor = hardwareMap.get(DcMotor.class, "turret");
         flyWheel = hardwareMap.get(DcMotorEx.class, "flyWheel");
         hood = hardwareMap.get(Servo.class, "top");
+
+        turretEncoder = hardwareMap.get(AnalogInput.class, "encoder");
 
 
         isBlue = goalColor.equalsIgnoreCase("blue");
         turretOn = turretOnx;
         hoodOn = true;
 
-        turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                // Reset the motor encoder
-        turretMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        flyWheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, flyWheelCoefficients);
-        turretMotor.setDirection(DcMotor.Direction.REVERSE);
-        startTurretPosition = x;
+
+
+        turretMotor.setDirection(DcMotor.Direction.FORWARD);
+        startTurretPosition = calculateTurretOffset();
+
+
+        turretOffset = calculateTurretOffset();
 
         values = new Fullfieldshootingvalues(goalColor);
     }
 
-    public void aimTurret(double x, double y, double h){
-        double aimAngleBlue = Math.toDegrees((Math.PI / 2) + Math.atan2((144 - y),(x-9.8)));
-        double turretDeviationNeeded;
-        double turretDeviation = getTurretDeviationOffset();
+    public void flyWheelPidf(double distance) {
+        double MAX_VELOCITY=1950;
+        double kP = .005;
+        double target = values.flywheelspeedlut(distance);
+        double error = target- flyWheel.getVelocity();
 
-        double aimAngleRed = Math.toDegrees(Math.atan2((144 - y) ,(130 - x)));
-        if (isBlue){
-            turretDeviationNeeded = aimAngleBlue - h;
+        // PID
 
+        double power = (target / MAX_VELOCITY) + kP * error;
+        flyWheel.setPower(power);
 
+    }
+
+    public void setFLyWheelSpeedPID(double speed) {
+        double MAX_VELOCITY=1950;
+        double kP = .005;
+        double target = speed;
+        double error = target- flyWheel.getVelocity();
+
+        // PID
+
+        double power = (target / MAX_VELOCITY) + kP * error;
+        flyWheel.setPower(power);
+
+    }
+
+    public double turretFieldPosition(){
+        double robotHeading = Math.toDegrees(follower.getHeading());
+        double position = robotHeading - getTurretPosition();
+
+        return position;
+
+    }
+    public void angularVelocityPIDF(double targetAngle){
+        double dx,dy;
+        if(isBlue) {
+           dx = TARGET_X_BLUE -follower.getPose().getX() ;
+           dy = TARGET_Y_BLUE - follower.getPose().getY();
         } else{
-            turretDeviationNeeded = aimAngleRed-h;
+            dx = TARGET_X_RED - follower.getPose().getX();
+            dy = TARGET_Y_RED - follower.getPose().getY();
         }
+        double robotHeading = Math.toDegrees(follower.getHeading());
 
-        if ( Math.abs(turretDeviationNeeded - turretDeviation)<1||turretOn==false) {
-            turretMotor.setPower(0);
-            lastError = 0;
-            integralSum =0;
+        // convert field target into turret frame
+        double turretTarget = robotHeading-targetAngle;
 
-        } else {
+        // wrap to shortest path
+        turretTarget = angleWrap(turretTarget);
+
+        // clamp to physical limits
+        turretTarget = Math.max(-180, Math.min(180, turretTarget));
 
 
-            double error = turretDeviationNeeded - turretDeviation;
 
-            // shortest path
+        double error = turretTarget -getTurretPosition();
 
-// Clamp target inside ±200
-            double target = Math.max(TURRET_MIN, Math.min(TURRET_MAX, turretDeviationNeeded));
+        double steering = Kp * error;
 
-// PID
-            integralSum += error * dt;
-            integralSum = Math.max(-50, Math.min(50, integralSum));
+        double robotAngularVel = Math.toDegrees(follower.getAngularVelocity());
+        double angularFF = KvTurn * robotAngularVel;
 
-            double derivative = (error - lastError) / dt;
-            double output = KpTurret*error + KiTurret*integralSum + KdTurret*derivative;
+        double vx = follower.getVelocity().getXComponent();
+        double vy = follower.getVelocity().getYComponent();
 
-// Soft limit protection
+        double distance = Math.hypot(dx, dy);
+        double bearingRate;
+        if (isBlue) {
+         bearingRate = (vy * dx - vx * dy) / (distance * distance);
+        }else{
+        bearingRate = (vx * dy - vy * dx) / (distance * distance);
+        }
+        double bearingFF = KvBearing * Math.toDegrees(bearingRate);
+
+        double power = steering + angularFF + bearingFF;
+
+        power = Math.max(-1, Math.min(1, power));
+    if (turretOn) {
+    turretMotor.setPower(power);
+    }
+    }
+
+
+    public void turretPIDF(double targetAngle, Follower follower) {
+        double robotHeading = Math.toDegrees(follower.getHeading());
+        double turretNeeded = robotHeading-targetAngle;
+
+
+
+        turretNeeded = -Math.max(-180, Math.min(turretNeeded, 180));
+
+
+
+
+        double error = turretNeeded -getTurretPosition();
+
+        integralSum += error * dt;
+        integralSum = Math.max(-50, Math.min(50, integralSum));
+
+        double derivative = (error - lastErrorTurret) / dt;
+        double ff = Kfturret * Math.signum(error);
+        double output = Kpturret * error + Kiturret * integralSum + Kdturret * derivative+ff;
+
 
 // Cap speed
-            output = Math.max(-0.75, Math.min(0.75, output));
+        output = Math.max(-1, Math.min(1, output));
+        turretMotor.setPower(output);
 
-            turretMotor.setPower(output);
-            lastError = error;
+        lastErrorTurret = error;
 
 
-        }
 
 
     }
+    public double error(double x, double y) {
+        double targetAngle = getTargetAngle(x,y);
+        double robotHeading = Math.toDegrees(follower.getHeading());
+        //double turretNeeded = (targetAngle - robotHeading + 540) % 360 - 180;
+       double turretNeeded = robotHeading-targetAngle ;
 
-    public void autoHoodAnglelut(double x, double y){
-        if (hoodOn == true) {
-            hood.setPosition(values.hoodanglelut(x, y));
-        }
+
+        turretNeeded = Math.max(-180, Math.min(turretNeeded, 180));
+
+
+        double error = turretNeeded - getTurretPosition();
+        return error;
     }
 
-    public void disableHoodAdjust(){
-        hoodOn=false;
-    }
-    public void enableHoodAdjust(){
-        hoodOn=true;
-    }
-    public void switchHoodAdjust(){
-        hoodOn= !hoodOn;
-    }
-    public boolean getHoodAdjustOn(){
-        return hoodOn;
-    }
-    public void aimTurretGreaterthan360(double x, double y, double h){
-        double aimAngleBlue = Math.toDegrees((Math.PI / 2) + Math.atan2(x , (144 - y)));
-        double turretDeviationNeeded;
-        double turretDeviation = getTurretDeviationOffset();
-
-        double aimAngleRed = Math.toDegrees(Math.atan2((144 - y) ,(144 - x)));
-
-        if (isBlue){
-           turretDeviationNeeded = aimAngleBlue - h;
-
-
-        } else{
-            turretDeviationNeeded = aimAngleRed-h;
-        }
-
-        if ( Math.abs(turretDeviationNeeded - turretDeviation)<1||turretOn==false) {
-            turretMotor.setPower(0);
-            lastError = 0;
-            integralSum =0;
-
+    public double getDistance(double x, double y) {
+        if (isBlue) {
+            return Math.sqrt((x-TARGET_X_BLUE) * (x-TARGET_X_BLUE) + (TARGET_Y_BLUE - y) * (TARGET_Y_BLUE - y));
         } else {
-
-            double turretAngle = (turretMotor.getCurrentPosition() * 360.0) / 1400.0;
-
-            double error = turretDeviationNeeded - turretAngle;
-
-            if (error > 180)  error -= 360;
-            if (error < -180) error += 360;
-            // shortest path
-
-// Clamp target inside ±200
-            double target = Math.max(TURRET_MIN, Math.min(TURRET_MAX, turretDeviationNeeded));
-
-// PID
-            integralSum += error * dt;
-            integralSum = Math.max(-50, Math.min(50, integralSum));
-
-            double derivative = (error - lastError) / dt;
-            double output = KpTurret*error + KiTurret*integralSum + KdTurret*derivative;
-
-// Soft limit protection
-            if (turretAngle >= TURRET_MAX && output > 0) output = 0;
-            if (turretAngle <= TURRET_MIN && output < 0) output = 0;
-
-// Cap speed
-            output = Math.max(-0.75, Math.min(0.75, output));
-
-            turretMotor.setPower(output);
-            lastError = error;
-
-
+            return Math.sqrt((TARGET_X_RED - x) * (TARGET_X_RED - x) + (TARGET_Y_RED - y) * (TARGET_Y_RED - y));
         }
-
 
     }
-    public void aimTurretOriginal(double x, double y, double h){
-        double aimAngleRed = Math.toDegrees(Math.atan2((144 - y) , (144 - x)));
 
-
-        double aimAngleBlue = Math.toDegrees((Math.PI / 2) + Math.atan2(x , (144 - y)));
-        double turretDeviationNeeded;
-        double turretDeviation = getTurretDeviationOffset();
-
-
-        if (isBlue){
-            turretDeviationNeeded = aimAngleBlue - h;
-
-
-        } else{
-            turretDeviationNeeded = aimAngleRed-h;
-        }
-
-
-        //turret PID
-
-        if (Math.abs(turretDeviationNeeded - turretDeviation) < 3 || Math.abs(turretDeviationNeeded) > 150||turretOn==false) {
-            turretMotor.setPower(0);
-            integralSum = 0;
-
+    public double getDistanceMovingWhileShooting(double x, double y, Vector velocity) {
+        double vsubxt = velocity.getXComponent() * values.distancetimelut(x, y);
+        double vsubyt = velocity.getYComponent() * values.distancetimelut(x, y);
+        if (isBlue) {
+            return Math.sqrt((x -TARGET_X_BLUE+ vsubxt) * (vsubxt -TARGET_X_BLUE+ x) + (TARGET_Y_BLUE - y - vsubyt) * (TARGET_Y_BLUE - y - vsubyt));
         } else {
-
-
-            double currentAngle = turretDeviation + h;
-
-            //  shortest-path error
-            double error = turretDeviationNeeded - turretDeviation;
-
-            integralSum += error * dt;
-            double derivative = (error - lastError) / dt;
-
-            double output = (KpTurret * error) + (KiTurret * integralSum) + (KdTurret * derivative);
-
-            // Optional but recommended
-            output = Math.max(-0.75, Math.min(0.75, output));
-
-            turretMotor.setPower(output);
-
-            lastError = error;
-
-        }
-    }
-    public double getTargetBlue(double x,double y){
-        return Math.toDegrees((Math.PI / 2) + Math.atan2((144 - y),(x-9.8)));
-    }
-    public double getTargetRed(double x,double y){
-
-        return Math.toDegrees(Math.atan2((144 - y) ,(130 - x)));
-    }
-
-    public void disableTurret(){
-        turretOn = false;
-    }
-    public void enableTurret(){
-        turretOn = true;
-    }
-
-    public void fullFieldShootingHoodLinear (double x, double y, double h){
-        double distance;
-
-        if (isBlue == true){
-            distance = Math.sqrt(x*x + (144-y)*(144-y));
-        }else {
-            distance = Math.sqrt((144-x)*(144-x) + (144-y)*(144-y));
+            return Math.sqrt((TARGET_X_RED - x - vsubxt) * (TARGET_X_RED  - x - vsubxt) + (TARGET_Y_RED - y - vsubyt) * (TARGET_Y_RED - y - vsubyt));
         }
 
+    }
 
-        hood.setPosition(-0.00102503*distance+0.726524);
+    public double getTargetAngle(double x, double y) {
+        double targetAngle;
+        if (isBlue) {
+            targetAngle = 90+Math.toDegrees(Math.atan2((x-TARGET_X_BLUE), (TARGET_Y_BLUE  - y)));
+        } else {
+            targetAngle = Math.toDegrees(Math.atan2(TARGET_Y_RED- y, TARGET_X_RED - x));
+        }
 
-        //insert Equation Here
+        return targetAngle+turretAngleAdjust;
+    }
+    public void updateTurretAngleAdjust(double x){
+        turretAngleAdjust = x;
+    }
+
+    public void resetTurret(){
+        turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        // Reset the motor encoder
+        turretMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
     }
 
-
-
-
-    public void switchTurretState(){
-        turretOn=!turretOn;
+    public double getTargetAngleMovingWhileShooting(double x, double y, Vector velocity) {
+        double targetAngle;
+        double vsubxt = velocity.getXComponent() * values.distancetimelut(x, y);
+        double vsubyt = velocity.getYComponent() * values.distancetimelut(x, y);
+        if (isBlue) {
+            targetAngle = (Math.PI/2)+ Math.atan2((TARGET_Y_BLUE - y - vsubyt), (x-TARGET_X_BLUE + vsubxt));
+        } else {
+            targetAngle = Math.atan2(TARGET_Y_RED - y - vsubyt, TARGET_X_RED - x - vsubxt);
+        }
+        return Math.toDegrees(targetAngle);
 
     }
 
+    //Turret Getters/Setters
 
-    public boolean getTurretOn(){
-        return turretOn;
+    public void disableFlywheeladjust(){flywheelOn =false;}
+    public void disableTurretAim(){turretOn = false;}
+    public void disableHoodAdjust(){hoodOn = false;}
+    public void enableFlywheeladjust(){flywheelOn =true;}
+    public void enableTurretAim(){turretOn = true;}
+    public void enableHoodAdjust(){hoodOn = true;}
+
+    public void setFlywheelVelocity(double velocity){
+        flyWheel.setVelocity(velocity);
     }
-    public void shootWhileMoving(){}
-    public double getFlyWheelSpeed(){
+    public void setFlyWheelPower(double power){
+        flyWheel.setPower(power);
+    }
+    public void setHoodAngle(double position){
+        hood.setPosition(position);
+    }
+
+    public double getFlywheelVelocity(){
         return flyWheel.getVelocity();
     }
-    public void setFlyWheelSpeed(double fs){
-        flyWheel.setVelocity (fs);
+    public double getFlywheelTarget(){
+        double x = follower.getPose().getX();
+        double y = follower.getPose().getY();
+        double distance = getDistance(x,y);
+        return values.flywheelspeedlut(distance);
     }
 
-    public void setHoodAngle(double ha){
-        hood.setPosition(ha);
-    }
-    public double getHoodAngle(){return hood.getPosition();}
+    public double getTurretPosition(){
+        return (turretMotor.getCurrentPosition() * 360) / (1400);
 
 
-    public double getTurretDeviationFromEncoder(){
-        return (turretMotor.getCurrentPosition() * 360) / 1400;
     }
-    public double getTurretDeviationOffset(){
-        return ((turretMotor.getCurrentPosition() * 360) / 1400)-startTurretPosition;
-    }
-    public void updateFlywheelCoefficents(){
-        flyWheelCoefficients = new PIDFCoefficients (Pflywheel,Iflywheel,Dflywheel,Fflywheel);
-        flyWheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, flyWheelCoefficients);
+
+    public double calculateTurretOffset(){
+        double offset = + 360;
+        return ((turretEncoder.getVoltage() / 3.2 * 120 + offset) % 120)-60;
 
     }
-    public void setFlywheelHoodlut(double x, double y){
-        flyWheel.setVelocity(values.flywheelspeedlut( x,y));
-        hood.setPosition(values.hoodanglelut(x,y));
+    public Pose getCurrentPose(){
+        return follower.getPose();
     }
 
 
+    //Toggle Switches
+    public void switchTurretState(){turretOn = !turretOn;}
+    public boolean getTurretOn(){return turretOn;}
+    public void switchHoodAdjust(){hoodOn = !hoodOn;}
+    public boolean getHoodAdjustOn(){return hoodOn;}
 
 
+
+
+
+    //What needs to be called in Final Code
+    public void updateFollower(Follower follower){this.follower = follower;}
+    public void runTurret(){
+        double x = follower.getPose().getX();
+        double y = follower.getPose().getY();
+        Vector v = follower.getVelocity();
+        double targetAngle;
+        double targetDistance;
+        if (movingWhileShooting){
+            targetAngle = getTargetAngleMovingWhileShooting(x,y,v);
+            targetDistance = getDistanceMovingWhileShooting(x,y,v);
+        } else {
+            targetAngle = getTargetAngle(x,y);
+            targetDistance = getDistance(x,y);
+        }
+        if (hoodOn){
+            hood.setPosition(values.hoodanglelut(targetDistance));
+        }
+        if (flywheelOn){
+            flyWheelPidf(targetDistance);
+        }
+        if (turretOn){
+            angularVelocityPIDF(targetAngle);
+        }
+
+
+    }
+
+    public double angleWrap(double angle){
+        while(angle > 180) angle -= 360;
+        while(angle < -180) angle += 360;
+        return angle;
+    }
 
 
 }
+

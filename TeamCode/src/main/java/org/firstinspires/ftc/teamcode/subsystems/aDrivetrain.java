@@ -28,7 +28,7 @@ public class aDrivetrain {
         frontLeft.setDirection(DcMotor.Direction.FORWARD);
     }
     public void driveCA(double right_stick_x, double right_stick_y, double left_stick_x, double left_trigger, double right_trigger){
-        double rtx = right_stick_x;
+        double rtx = -right_stick_x;
         double rty = right_stick_y;
         double ltx = left_stick_x * 1.1;
 
@@ -58,7 +58,7 @@ public class aDrivetrain {
     }
 
     public void driveIG(double right_stick_x, double right_stick_y, double left_stick_x, double left_trigger, double right_trigger){
-        double rtx = right_stick_x;
+        double rtx = -right_stick_x;
         double rty = right_stick_y;
         double ltx = left_stick_x * 1.1;
 
