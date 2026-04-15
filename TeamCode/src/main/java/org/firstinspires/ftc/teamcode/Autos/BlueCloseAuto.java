@@ -230,6 +230,7 @@ public class BlueCloseAuto extends OpMode {
 
                     }
                 }
+
                 break;
 
             case SHOOTGPP_STARTINTAKEPGP:
@@ -332,11 +333,9 @@ public class BlueCloseAuto extends OpMode {
         limelight.pipelineSwitch(0);
 
 
-        follower = Constants.createFollower(hardwareMap);
         buildPaths();
         follower.setPose(startPose);
 
-    }
 
     public void start(){
         opModeTimer.resetTimer();

@@ -60,6 +60,12 @@ public class goalBlueTeleop extends OpMode {
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(startingPose == null ? new Pose() : startingPose);
         follower.update();
+        intake = new Intake(hardwareMap);
+        spindex = new Spindex (hardwareMap);
+        turret = new Turret(hardwareMap, "blue",follower,true);
+        drive = new aDrivetrain(hardwareMap);
+
+
         telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
 
 
@@ -79,7 +85,9 @@ public class goalBlueTeleop extends OpMode {
 
     }
     public void start(){
+
         follower.startTeleopDrive();
+        intake.setIntakePower(1);
         follower.update();
     }
     public void loop(){
@@ -160,6 +168,9 @@ public class goalBlueTeleop extends OpMode {
             follower.setPose(resetPose);
         }
 
+        if (gamepad2.left_stick_button){
+            follower.setPose(resetPose);
+        }
 
         turret.autoHoodAnglelut(follower.getPose().getX(), follower.getPose().getY());
 

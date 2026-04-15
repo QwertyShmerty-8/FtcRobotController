@@ -21,7 +21,7 @@ import java.util.List;
 
 @Autonomous
 
-public class BlueFarAuto extends OpMode {
+public class RedFarAuto extends OpMode {
 
     private Follower follower;
     private Timer pathTimer, opModeTimer;
@@ -30,7 +30,7 @@ public class BlueFarAuto extends OpMode {
     private Turret turret;
 
 
-    public enum frPathState{
+    public enum fbPathState{
         //STARTPosition -->EndPosition
         START,
         SHOOTPRELOAD,
@@ -45,14 +45,14 @@ public class BlueFarAuto extends OpMode {
 
     }
 
-    private final Pose startPose = new Pose(56.6, 7.76, Math.toRadians (90));
-    private final Pose startIntake = new Pose (42.5, 35, Math.toRadians(180));
-    private final Pose endIntakeSpike = new Pose (9.4,35,Math.toRadians(180));
-    private final Pose shoot = new Pose (57.47, 22.79,Math.toRadians(180));
-    private final Pose end = new Pose (57.29,34.8,Math.toRadians(180));
+    private final Pose startPose = new Pose(87.4, 7.76, Math.toRadians (90));
+    private final Pose startIntake = new Pose (101.5, 35, Math.toRadians(0));
+    private final Pose endIntakeSpike = new Pose (137.6,35,Math.toRadians(0));
+    private final Pose shoot = new Pose (86.53, 22.79,Math.toRadians(0));
+    private final Pose end = new Pose (86.71,34.8,Math.toRadians(0));
 
 
-    frPathState pathState;
+    fbPathState pathState;
 
     private PathChain  start_startIntake, startIntake_endIntake, endIntakeSpike_shoot, shoot_end;
 
@@ -91,7 +91,7 @@ public class BlueFarAuto extends OpMode {
                         opModeTimer.resetTimer();
                         follower.followPath(start_startIntake);
                         spindex.goToPosition(344);
-                        setPathState(frPathState.SHOOTPRELOAD_STARTINTAKE);
+                        setPathState(fbPathState.SHOOTPRELOAD_STARTINTAKE);
                     }
                 }
                 break;
@@ -99,7 +99,7 @@ public class BlueFarAuto extends OpMode {
             case SHOOTPRELOAD_STARTINTAKE:
                 if (!follower.isBusy()) {
                     follower.followPath(startIntake_endIntake);
-                    setPathState(frPathState.STARTINTAKE_ENDINTAKE);
+                    setPathState(fbPathState.STARTINTAKE_ENDINTAKE);
                     follower.setMaxPower(0.6);
                 }
                 break;
@@ -115,7 +115,7 @@ public class BlueFarAuto extends OpMode {
                     intake.setIntakePower(1);
                     follower.followPath(endIntakeSpike_shoot);
                     follower.setMaxPower(1);
-                    setPathState(frPathState.SHOOT2);
+                    setPathState(fbPathState.SHOOT2);
 
 
                 }
@@ -127,28 +127,22 @@ public class BlueFarAuto extends OpMode {
                     opModeTimer.resetTimer();
 
                     intake.setIntakePower(1);
-                    setPathState(frPathState.SHOOT2);
+                    setPathState(fbPathState.SHOOT2);
 
                 }
 
                 break;
 
             case SHOOT2:
-
-
-                if (opModeTimer.getElapsedTimeSeconds() > 4) {
-                    spindex.runSpindexToggle(1);
-                    intake.shootBalls();
-                    if (opModeTimer.getElapsedTimeSeconds()>7.5) {
-                        follower.followPath(shoot_end);
-                        setPathState(frPathState.DONE);
-                    }
+                spindex.runSpindexToggle(1);
+                if (opModeTimer.getElapsedTimeSeconds() > 3.5) {
+                    follower.followPath(shoot_end);
+                    setPathState(fbPathState.DONE);
                 }
                 break;
 
 
             case DONE:
-
                 if (!follower.isBusy()) {
                     telemetry.addLine("Finished");
                 }
@@ -161,7 +155,7 @@ public class BlueFarAuto extends OpMode {
         }
 
     }
-    public void setPathState(frPathState newState){
+    public void setPathState(fbPathState newState){
         pathState=newState;
         pathTimer.resetTimer();
     }
@@ -170,7 +164,7 @@ public class BlueFarAuto extends OpMode {
 
     @Override
     public void init(){
-        pathState = frPathState.SHOOTPRELOAD;
+        pathState = fbPathState.SHOOTPRELOAD;
         pathTimer = new Timer();
         opModeTimer = new Timer();
 
@@ -187,9 +181,6 @@ public class BlueFarAuto extends OpMode {
     }
 
     public void start(){
-        turret.setFlywheelVelocity(-1270);
-        turret.setHoodAngle(0.84);
-
         opModeTimer.resetTimer();
         setPathState(pathState);
 
@@ -207,12 +198,8 @@ public class BlueFarAuto extends OpMode {
         telemetry.addData("X:", x);
         telemetry.addData("Y:", y);
         telemetry.addData("H:", h);
-if (pathState != frPathState.DONE) {
-    turret.runTurret();
-} else {
-    turret.angularVelocityPIDF(90);
-}
 
+        turret.runTurret();
 
 
         statePathUpdate();

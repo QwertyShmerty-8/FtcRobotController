@@ -42,7 +42,7 @@ public class goalRedTeleop extends OpMode {
     private aDrivetrain drive;
 
     private Follower follower;
-    public static Pose startingPose = new Pose(123,123,Math.toRadians(35));
+    public static Pose startingPose = new Pose (89.08, 136.15, Math.toRadians(0));
     public static Pose resetPose = new Pose(123,123,Math.toRadians(35));
 
     private Supplier<PathChain> pathChain;
@@ -60,7 +60,10 @@ public class goalRedTeleop extends OpMode {
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(startingPose == null ? new Pose() : startingPose);
         follower.update();
-        telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
+        intake = new Intake(hardwareMap);
+        spindex = new Spindex (hardwareMap);
+        turret = new Turret(hardwareMap, "red",follower,true);
+        drive = new aDrivetrain(hardwareMap);
 
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());

@@ -5,6 +5,7 @@ import com.arcrobotics.ftclib.util.InterpLUT;
 public class Fullfieldshootingvalues {
     InterpLUT Hoodlut = new InterpLUT();
     InterpLUT  Flywheellut = new InterpLUT();
+    InterpLUT  DistanceTimelut = new InterpLUT();
     Boolean isBlue;
     double firstNumber;
     double lastNumber;
@@ -14,22 +15,34 @@ public class Fullfieldshootingvalues {
 
 
         //Hood Angle Data (Distance, Hood Angle)
-        firstNumber = 30;
-        Hoodlut.add(30,0.15);
-        Hoodlut.add(36.5, 0.36);
-        Hoodlut.add(42.5, 0.4);
-        Hoodlut.add(48.5, 0.6);
-        Hoodlut.add(54.5, 0.72);
-        Hoodlut.add(60.5, 0.92);
+        firstNumber = 43.5;
+        Hoodlut.add(43.5,0.13);
+        Hoodlut.add(53.5, 0.41);
+        Hoodlut.add(63.5, 0.55);
+        Hoodlut.add(73.5, 0.62);
+        Hoodlut.add(83.5, 0.75);
+        Hoodlut.add(93.5,0.85);
+        Hoodlut.add(138,0.84);
+        Hoodlut.add(144,0.84);
+        Hoodlut.add(151,0.84);
+
+
+
+
 
         //FlywheelSpeed Data (Distance, FlywheelSpeed)
-        Flywheellut.add(30,-1200);
-        Flywheellut.add(36.5, -1200);
-        Flywheellut.add(42.5, -1200);
-        Flywheellut.add(48.5, -1200);
-        Flywheellut.add(54.5, -1200);
-        Flywheellut.add(60.5, -1200);
-        lastNumber = 60.5;
+        Flywheellut.add(43.5,-1000);
+        Flywheellut.add(53.5, -1100);
+        Flywheellut.add(63.5, -1100);
+        Flywheellut.add(73.5, -1200);
+        Flywheellut.add(83.5, -1300);
+        Flywheellut.add(93.5,-1300);
+        Flywheellut.add(138,-1480);
+        Flywheellut.add(144,-1520);
+        Flywheellut.add(151,-1520);
+        lastNumber = 151;
+
+
 
 
         Hoodlut.createLUT();
@@ -46,7 +59,7 @@ public class Fullfieldshootingvalues {
         if (distance>lastNumber){
             return -1200;
         }else if(distance<firstNumber){
-            return -1050;
+            return -1200;
 
         }else {
             return Flywheellut.get(distance);
@@ -54,23 +67,70 @@ public class Fullfieldshootingvalues {
 
 
     }
-    public double hoodanglelut(double x, double y){
-        double distance;
-        if (isBlue==true){
-            distance = Math.sqrt(x*x +(144-y)*(144-y));
-        }else{
-            distance = Math.sqrt((144-x)*(144-x) +(144-y)*(144-y));
-        }
-        if (distance>lastNumber){
-            return 1;
-        }else if (distance<firstNumber){
-            return 0;
+    public double flywheelspeedlut(double distance){
 
-        } else{
-            return Hoodlut.get(distance);
+        if (distance>lastNumber){
+            return -1520;
+        }else if(distance<firstNumber){
+            return -1060;
+
+        }else {
+            return Flywheellut.get(distance);
         }
+
 
     }
+
+
+    public double hoodanglelut(double x, double y) {
+        double distance;
+        if (isBlue == true) {
+            distance = Math.sqrt(x * x + (144 - y) * (144 - y));
+        } else {
+            distance = Math.sqrt((144 - x) * (144 - x) + (144 - y) * (144 - y));
+        }
+        if (distance > lastNumber) {
+            return 1;
+        } else if (distance < firstNumber) {
+            return 0;
+
+        } else {
+            return Hoodlut.get(distance);
+        }
+    }
+
+    public double hoodanglelut(double distancex) {
+        double distance=distancex;
+
+        if (distance > lastNumber) {
+            return 1;
+        } else if (distance < firstNumber) {
+            return 0;
+
+        } else {
+            return Hoodlut.get(distance);
+        }
+    }
+
+        public double distancetimelut ( double x, double y){
+
+            double distance;
+            if (isBlue == true) {
+                distance = Math.sqrt(x * x + (144 - y) * (144 - y));
+            } else {
+                distance = Math.sqrt((144 - x) * (144 - x) + (144 - y) * (144 - y));
+            }
+            if (distance > lastNumber) {
+                return 1;
+            } else if (distance < firstNumber) {
+                return 0;
+
+            } else {
+                return DistanceTimelut.get(distance);
+            }
+
+        }
+
     public double getDistance(double x, double y){
         if (isBlue==true){
              return Math.sqrt(x*x +(144-y)*(144-y));

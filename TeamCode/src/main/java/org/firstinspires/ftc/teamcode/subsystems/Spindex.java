@@ -1,23 +1,24 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-import static org.firstinspires.ftc.teamcode.myConstants.Spindex.KdSpindex;
-import static org.firstinspires.ftc.teamcode.myConstants.Spindex.KfSpindex;
-import static org.firstinspires.ftc.teamcode.myConstants.Spindex.KiSpindex;
-import static org.firstinspires.ftc.teamcode.myConstants.Spindex.KpSpindex;
-import static org.firstinspires.ftc.teamcode.myConstants.Turret.KdTurret;
-import static org.firstinspires.ftc.teamcode.myConstants.Turret.KiTurret;
-import static org.firstinspires.ftc.teamcode.myConstants.Turret.KpTurret;
 
+
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.teamcode.Helperfunctions.Fullfieldshootingvalues;
 
 import org.firstinspires.ftc.teamcode.Helperfunctions.Fullfieldshootingvalues;
 import org.firstinspires.ftc.teamcode.Helperfunctions.myPIDF;
 
 public class Spindex {
     DcMotor spindex;
-    myPIDF pidf;
+    AnalogInput encoder;
+
     private double lastError = 0;
     private double integralSum = 0;
     private final double dt = 0.02;
@@ -28,71 +29,110 @@ public class Spindex {
 
 
     public Spindex(HardwareMap hardwareMap) {
-        spindex = hardwareMap.get(DcMotor.class, "spindexer");
+        encoder = hardwareMap.get(AnalogInput.class, "encoder");
+        spindex = hardwareMap.get(DcMotorEx.class, "spindexer");
         spindex.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         spindex.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         spindex.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         pidf = new myPIDF(KpSpindex,KiSpindex,KdSpindex,KfSpindex,-1,1,3);
 
+    public void startRotate(int rotations){
+        startEncoderCounts = spindex.getCurrentPosition();
+        encoderCountsNeeded = 288 * rotations;
+        rotating = true;
+    }
+
+    public void updateRotate(){
+
+        if(!rotating) return;
+
+        if(Math.abs(spindex.getCurrentPosition() - startEncoderCounts) < encoderCountsNeeded){
+            runSpindexToggle(1);
+        } else{
+            time.reset();
+            rotating = false;
+            goToPosition(344);
+        }
+    }
+
+    public boolean get1secAfterRotate(){
+        return (time.seconds()>3&& rotating == false);
     }
 
     public void setSpindexPower(double power){
         spindex.setPower(power);
+
+    }
+    public boolean getIsRotating(){
+        return rotating;
+    }
+    public double getSpindexMotorCounts(){
+        return spindex.getCurrentPosition();
     }
 
-    public double getPosition(){
-        double raw = (spindex.getCurrentPosition() * 1.25);
-        raw = ((raw % 360) + 360) % 360;
 
-        double adjusted = raw;
-        return (adjusted + 360) % 360;
+    public double getPosition(){
+        return encoder.getVoltage() / 3.2 * 360;
     }
 
     public void goToPosition(double target) {
-        double raw = (spindex.getCurrentPosition() * 1.25);
+        double raw = encoder.getVoltage() / 3.2 * 360;
         raw = ((raw % 360) + 360) % 360;
 
-        double adjusted = raw ;
+        double adjusted = raw;
         double position = (adjusted + 360) % 360;
         double errorForward = (target - position + 360) % 360;
         double errorShortest = ((target - position + 540) % 360) - 180;
 
-        double error;
-
-        if (Math.abs(errorShortest) <= 10) {
+        double error= errorShortest;
+        if (error < 25) {
             error = errorShortest;   // allow small backward correction
-        } else {
-            error = errorForward;    // otherwise always go forward
-        }
+        }else{
+                error = errorForward;    // otherwise always go forward
+            }
 
-        if (Math.abs(error) < 1) {
-            lastError = 0;
-            integralSum = 0;
-            spindex.setPower(0);
+            if (Math.abs(error) < 1) {
+                lastError = 0;
+                integralSum = 0;
+                spindex.setPower(0);
 
-        } else {
+            } else {
 
 
 // PID
-            integralSum += error * dt;
-            integralSum = Math.max(-50, Math.min(50, integralSum));
+                integralSum += error * dt;
+                integralSum = Math.max(-50, Math.min(50, integralSum));
 
-            double derivative = (error - lastError) / dt;
-            double ff = KfSpindex * Math.signum(error);
-            double output = KpSpindex * error + KiSpindex * integralSum + KdSpindex * derivative+ff;
+                double derivative = (error - lastError) / dt;
+                double ff = KfSpindex * Math.signum(error);
+                double output = KpSpindex * error + KiSpindex * integralSum + KdSpindex * derivative + ff;
 
 
 // Cap speed
-            output = Math.max(-1, Math.min(1, output));
-            spindex.setPower(output);
+                output = Math.max(-1, Math.min(1, output));
+                spindex.setPower(output);
 
-            lastError = error;
-        }
+                lastError = error;
+            }
+
+
+    }
+    public void resetSpindexEncoder(){
+        spindex.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        spindex.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
     }
     public void spindexIntake(){
         goToPosition(47.5);
+    }
+    public void runSpindexToggle(double power){
+        if (runTimer.seconds()>0.1){
+            spindex.setPower(power);
+            runTimer.reset();
+        } else {
+            spindex.setPower(0);
+        }
     }
 
 

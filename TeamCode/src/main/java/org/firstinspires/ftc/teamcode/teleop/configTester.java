@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.teleop;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.Pose;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
@@ -27,10 +29,13 @@ public class configTester extends OpMode {
     private Turret turret;
     private Limelight3A limelight;
     double id;
+    Follower follower;
 
     private aDrivetrain drive;
 
     public void init(){
+        follower = Constants.createFollower(hardwareMap);
+        follower.update();
         intake = new Intake(hardwareMap);
         spindex = new Spindex (hardwareMap);
         turret = new Turret(hardwareMap, "blue",0,false);
@@ -41,6 +46,7 @@ public class configTester extends OpMode {
         limelight.pipelineSwitch(0);
     }
     public void loop(){
+        follower.update();
         LLResult result = limelight.getLatestResult();
         List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -80,10 +86,10 @@ public class configTester extends OpMode {
             spindex.setSpindexPower(0);
         }
         if (gamepad1.right_trigger>0.25){
-            turret.setFlyWheelSpeed(-900);
+            turret.setFlywheelVelocity(-900);
         }
         else{
-            turret.setFlyWheelSpeed(0);
+            turret.setFlywheelVelocity(0);
         }
         if (gamepad1.left_bumper){
             intake.setIntakePower(0.4);
@@ -103,8 +109,23 @@ public class configTester extends OpMode {
         }
 
         telemetry.addData("spindex position", spindex.getPosition());
+        telemetry.addData("Follower Heading", Math.toDegrees(follower.getHeading()));
+        telemetry.addData("turret abs position", turret.getTurretPosition());
+        double turretNeeded = Math.toDegrees(follower.getHeading())-turret.getTargetAngle(follower.getPose().getX(), follower.getPose().getY());
+        telemetry.addData("Turret Needed", turretNeeded);
+        telemetry.addData("Error", turretNeeded-turret.getTurretPosition());
 
 
+        turretNeeded = Math.max(-180, Math.min(turretNeeded, 180));
+
+
+
+
+    }
+    public double angleWrap(double angle){
+        while(angle > 180) angle -= 360;
+        while(angle < -180) angle += 360;
+        return angle;
     }
 
 }

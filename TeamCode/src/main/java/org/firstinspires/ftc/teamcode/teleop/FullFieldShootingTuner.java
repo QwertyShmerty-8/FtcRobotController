@@ -45,6 +45,9 @@ public class FullFieldShootingTuner extends OpMode{
 
     @Override
     public void init(){
+        follower = Constants.createFollower(hardwareMap);
+        follower.setStartingPose(startingPose);
+        follower.update();
 
 
         intake = new Intake(hardwareMap);
@@ -52,11 +55,8 @@ public class FullFieldShootingTuner extends OpMode{
         turret = new Turret(hardwareMap, "blue",0,false);
         drive = new aDrivetrain(hardwareMap);
 
-        follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(startingPose == null ? new Pose() : startingPose);
-        follower.update();
         telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
-        turret.disableTurret();
+        turret.disableTurretAim();
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
@@ -69,6 +69,7 @@ public class FullFieldShootingTuner extends OpMode{
 
         public void start() {
             follower.startTeleopDrive();
+            intake.setIntakePower(1);
             follower.update();
         }
 
@@ -87,8 +88,7 @@ public class FullFieldShootingTuner extends OpMode{
 
 
         drive.driveIG(gamepad1.right_stick_x, gamepad1.right_stick_y, gamepad1.left_stick_x, gamepad1.left_trigger, gamepad1.right_trigger);
-
-        turret.aimTurret(follower.getPose().getX(), follower.getPose().getY(), Math.toDegrees(follower.getPose().getHeading()));
+        turret.runTurret();
 
         if (gamepad1.b) {
             intake.intakeBalls();
@@ -98,9 +98,12 @@ public class FullFieldShootingTuner extends OpMode{
         }
 
         if (gamepad1.x) {
-            spindex.setSpindexPower(1);
-        } else {
+            spindex.runSpindexToggle(1);
+        } else if (gamepad1.y){
+            spindex.runSpindexToggle(-1);
+        } else{
             spindex.setSpindexPower(0);
+
         }
 
 
@@ -124,7 +127,7 @@ public class FullFieldShootingTuner extends OpMode{
 
 
         turret.setHoodAngle(hoodAngle);
-        turret.setFlyWheelSpeed(flywheelVelocity);
+        turret.setFLyWheelSpeedPID(flywheelVelocity);
 
 
         telemetry.addData("Distance", distance);
@@ -140,7 +143,8 @@ public class FullFieldShootingTuner extends OpMode{
         telemetryM.debug("position", follower.getPose());
         telemetryM.debug("velocity", follower.getVelocity());
 
-        turret.updateFlywheelCoefficents();
+        telemetry.addData("TargetFlywheelSpeed",flywheelVelocity);
+
 
         telemetry.addData("Aim angle Blue", Math.toDegrees((Math.PI / 2) + Math.atan(follower.getPose().getX()/ (144 - follower.getPose().getY()))));
         telemetry.update();

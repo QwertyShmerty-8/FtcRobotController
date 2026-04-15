@@ -43,8 +43,8 @@ public class farBlueTeleop extends OpMode {
     private aDrivetrain drive;
 
     private Follower follower;
-    public static Pose startingPose = new Pose(56,8,Math.toRadians(90));
-    public static Pose resetPose = new Pose(20.34,123.37,Math.toRadians(144));
+    public static Pose startingPose =new Pose (57.29,34.8,Math.toRadians(180));//56,8,90
+    public static Pose resetPoseb = new Pose(20.34,123.37,Math.toRadians(144));
 
     private Supplier<PathChain> pathChain;
     private TelemetryManager telemetryM;
@@ -62,6 +62,14 @@ public class farBlueTeleop extends OpMode {
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(startingPose == null ? new Pose() : startingPose);
         follower.update();
+        intake = new Intake(hardwareMap);
+        spindex = new Spindex (hardwareMap);
+        turret = new Turret(hardwareMap, "blue",follower,true);
+        drive = new aDrivetrain(hardwareMap);
+        time = new ElapsedTime();
+
+
+
         telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
 
 
@@ -81,7 +89,10 @@ public class farBlueTeleop extends OpMode {
 
     }
     public void start(){
+
+
         follower.startTeleopDrive();
+        intake.setIntakePower(1);
         follower.update();
     }
     public void loop(){

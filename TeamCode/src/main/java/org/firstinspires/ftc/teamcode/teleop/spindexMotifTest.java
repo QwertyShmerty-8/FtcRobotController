@@ -6,6 +6,7 @@ import static org.firstinspires.ftc.teamcode.teleop.spindexMotifTest.ShootModes.
 import static org.firstinspires.ftc.teamcode.teleop.spindexMotifTest.ShootModes.WAIT_FOR_SHOOT_BUTTON;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.pedropathing.follower.Follower;
 import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
@@ -14,6 +15,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 
+import org.firstinspires.ftc.teamcode.Autos.BlueCloseAuto;
 import org.firstinspires.ftc.teamcode.Autos.sampleAutoPathing;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Spindex;
@@ -28,7 +30,7 @@ public class spindexMotifTest extends OpMode {
 
     private Limelight3A limelight;
     private Intake intake;
-    int id;
+    int id = 21;
     private Spindex spindex;
     private Turret turret;
     AnalogInput encoder;
@@ -36,6 +38,10 @@ public class spindexMotifTest extends OpMode {
     private double lastLootTime=0;
     private double currentLoopTime;
     double targetSpindexPosition = 0;
+    Follower follower;
+    double ppgGoToPosition;
+    double pgpGoToPosition;
+    double gppGoToPosition;
 
     public enum ShootModes {
         //STARTPosition -->EndPosition
@@ -66,7 +72,6 @@ public class spindexMotifTest extends OpMode {
     }
 
     public void loop() {
-
         LLResult result = limelight.getLatestResult();
         List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
         for (LLResultTypes.FiducialResult fiducial : fiducials) {
@@ -74,6 +79,30 @@ public class spindexMotifTest extends OpMode {
 
         }
         telemetry.addData("Fiducial ", id);
+
+        if (id ==21){
+            ppgGoToPosition =0;
+            pgpGoToPosition =100;
+            gppGoToPosition= 200;
+            turret.switchTurretState();
+
+
+        }
+        if (id ==22){
+            ppgGoToPosition =200;
+            pgpGoToPosition =0;
+            gppGoToPosition= 100;
+
+
+
+        }
+        if (id ==23){
+
+            ppgGoToPosition =100;
+            pgpGoToPosition =200;
+            gppGoToPosition= 0;
+
+        }
 
         telemetry.addData("spindex position", spindex.getPosition());
         telemetry.addData("spindex inside class position", encoder.getVoltage() / 3.2 * 360);
@@ -88,7 +117,7 @@ public class spindexMotifTest extends OpMode {
     public void shootSwitchCase() {
         switch (shootModes) {
             case WAIT_FOR_SHOOT_BUTTON:
-                spindex.goToPosition(47.5);
+                spindex.goToPosition(0);
                 intake.intakeBalls();
                 intake.forwardIntakeDirection();
                 if (id == 21) {
@@ -102,7 +131,7 @@ public class spindexMotifTest extends OpMode {
                 }
                 if (gamepad1.a) {
                     intake.switchBallOrder();
-                    intake.setIntakePower(0.25);
+                    intake.setIntakePower(-0.25);
 
                     pathTimer.resetTimer();
 
@@ -120,7 +149,7 @@ public class spindexMotifTest extends OpMode {
 
                 spindex.goToPosition(targetSpindexPosition);
 
-                if (Math.abs(spindex.getPosition()-targetSpindexPosition) < 5) {
+                if (Math.abs(spindex.getPosition()-targetSpindexPosition) < 4) {
                     intake.setIntakePower(1);
                     intake.shootBalls();
                     pathTimer.resetTimer();
@@ -132,11 +161,11 @@ public class spindexMotifTest extends OpMode {
             case SHOOT:
 
                 intake.setIntakePower(1);
-                turret.setFlyWheelSpeed(-900);
+                turret.setFlywheelVelocity(-900);
 
-                spindex.setSpindexPower(0.5);
+                spindex.setSpindexPower(1);
 
-                if (pathTimer.getElapsedTimeSeconds() > 3) {
+                if (pathTimer.getElapsedTimeSeconds() > 5) {
                     shootModes = WAIT_FOR_SHOOT_BUTTON;
                 }
                 break;
