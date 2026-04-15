@@ -11,7 +11,6 @@ import com.pedropathing.paths.PathChain;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Supplier;
 import org.firstinspires.ftc.teamcode.Helperfunctions.Fullfieldshootingvalues;
@@ -38,7 +37,6 @@ public class goalRedTeleop extends OpMode {
     private fancyButton sortModeToggle;
     private fancyButton holdModeToggle;
     private Boolean inHoldMode;
-    private ElapsedTime spindexTimer;
 
 
     private aDrivetrain drive;
@@ -54,7 +52,11 @@ public class goalRedTeleop extends OpMode {
 
     @Override
     public void init(){
-        spindexTimer = new ElapsedTime();
+        intake = new Intake(hardwareMap);
+        spindex = new Spindex (hardwareMap);
+        turret = new Turret(hardwareMap, "red",0,true);
+        drive = new aDrivetrain(hardwareMap);
+
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(startingPose == null ? new Pose() : startingPose);
         follower.update();
@@ -62,9 +64,6 @@ public class goalRedTeleop extends OpMode {
         spindex = new Spindex (hardwareMap);
         turret = new Turret(hardwareMap, "red",follower,true);
         drive = new aDrivetrain(hardwareMap);
-
-
-        telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
 
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
@@ -84,21 +83,9 @@ public class goalRedTeleop extends OpMode {
     }
     public void start(){
         follower.startTeleopDrive();
-        intake.setIntakePower(1);
         follower.update();
     }
     public void loop(){
-        if (gamepad2.a){
-            intake.setIntakePower(-1);
-        }else if(gamepad1.right_trigger>0.25){
-            intake.setIntakePower(1);
-        }else if(sortModeToggle.isOn){
-            intake.setIntakePower(-1);
-        }else if(gamepad1.left_bumper==true){
-            intake.setIntakePower(-1);
-        }else{
-            intake.setIntakePower(1);
-        }
         hoodAdjustOnToggle.checkStatus(gamepad1.a);
 
         if (hoodAdjustOnToggle.startPress){
@@ -130,7 +117,7 @@ public class goalRedTeleop extends OpMode {
         }
 
         telemetry.addData ("SortMode?", intake.getSortMode());
-
+        intake.configureSortMode();
 
         holdModeToggle.checkStatus(gamepad2.left_bumper||gamepad2.right_bumper);
 
@@ -146,8 +133,6 @@ public class goalRedTeleop extends OpMode {
         telemetry.addData ("Holding Position?", drive.getHoldMode());
 
         follower.update();
-        turret.updateFollower(follower);
-        turret.runTurret();
 
 
 
@@ -170,25 +155,19 @@ public class goalRedTeleop extends OpMode {
 
         //Gamepd2 controls
         if (gamepad2.left_trigger>0.25){
-            spindex.runSpindexToggle(1);
-            spindexTimer.reset();
+            spindex.setSpindexPower(1);
         } else if (gamepad2.right_trigger>0.25){
-            spindexTimer.reset();
-            spindex.runSpindexToggle(-1);
-            //  } else if (spindexTimer.seconds()>1) {
-            //      spindex.goToPosition(0);
-        }else if (spindexTimer.seconds()>1){
-            spindex.goToPosition(344);
-        }else {
-            spindex.setSpindexPower(0);
+            spindex.setSpindexPower(-1);
         }
-
 
         if (gamepad2.left_stick_button){
             follower.setPose(resetPose);
         }
 
 
+        turret.autoHoodAnglelut(follower.getPose().getX(), follower.getPose().getY());
+
+        turret.aimTurretOriginal(follower.getPose().getX(), follower.getPose().getY(), Math.toDegrees(follower.getPose().getHeading()));
 
 
 

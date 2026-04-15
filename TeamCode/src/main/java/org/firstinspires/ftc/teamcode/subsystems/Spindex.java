@@ -12,7 +12,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.Helperfunctions.Fullfieldshootingvalues;
 
-@Config
+import org.firstinspires.ftc.teamcode.Helperfunctions.Fullfieldshootingvalues;
+import org.firstinspires.ftc.teamcode.Helperfunctions.myPIDF;
 
 public class Spindex {
     DcMotor spindex;
@@ -22,19 +23,9 @@ public class Spindex {
     private double integralSum = 0;
     private final double dt = 0.02;
 
-    public static double KpSpindex = 0.0065;
-    public static double KiSpindex = 0;
-    public static double KdSpindex =0;
-    public static double KfSpindex =0.01;
-
-    public ElapsedTime runTimer;
-    public ElapsedTime time;
-
     Fullfieldshootingvalues values;
 
-    double startEncoderCounts = 0;
-    boolean rotating = false;
-    int encoderCountsNeeded = 0;
+    boolean atPosition = false;
 
 
     public Spindex(HardwareMap hardwareMap) {
@@ -42,13 +33,9 @@ public class Spindex {
         spindex = hardwareMap.get(DcMotorEx.class, "spindexer");
         spindex.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         spindex.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        spindex.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        runTimer = new ElapsedTime();
-        time = new ElapsedTime();
+        spindex.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-
-
-    }
+        pidf = new myPIDF(KpSpindex,KiSpindex,KdSpindex,KfSpindex,-1,1,3);
 
     public void startRotate(int rotations){
         startEncoderCounts = spindex.getCurrentPosition();

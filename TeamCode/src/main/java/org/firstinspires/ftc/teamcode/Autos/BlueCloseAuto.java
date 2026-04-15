@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.Autos;
 
+import static org.firstinspires.ftc.teamcode.Autos.BlueCloseAuto.PathState.STARTINTAKEGPP_ENDINTAKEGPP;
+import static org.firstinspires.ftc.teamcode.Autos.simpleGoalBlueAuto.PathState.SHOOTPOSETOENDPOSE;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierCurve;
@@ -38,98 +40,62 @@ public class BlueCloseAuto extends OpMode {
     double pgpGoToPosition;
     double gppGoToPosition;
 
-    double shootPreloadSpeed = -1140;
-    double preloadHood= 0.31;
-    //target 1150
-    double ppgSpeed = -1200;
-    double ppgHood= 0.43;
-
-    double pgpSpeed= -1200;
-    double pgpHood = 0.43;
-
-    double gppSpeed = 1200;
-    double gppHood= 0.43;
-
-    double targetFlywheelSpeed;
-    double targetHoodAngle;
-
-    public enum PathStateB{
+    public enum PathState{
         //STARTPosition -->EndPosition
-        START,
 
         DETECTAPRILTAG,
 
         START_SHOOTPRELOAD,
         SORTPRELOAD,
-        SHOOTPRELOAD_STARTINTAKEPPG,
-
-        STARTINTAKEPPG_ENDINTAKEPPG,
-        ENDINTAKEPPG_STARTCLEAR1,
-        STARTCLEAR1_ENDCLEAR1,
-        ENDCLEAR1_SHOOTPPG,
-        ENDINTAKEPPG_CLEAR1,
-        CLEAR1_SHOOTPPG,
-        SHOOTGPP,
-        SHOOTPPG_STARTINTAKEPGP,
-        STARTINTAKEPGP_ENDINTAKEPGP,
-        ENDINTAKEPGP_SHOOTPGP,
-        SHOOTPGP,
-        SHOOTPGP_STARTINTAKEGPP,
+        SHOOTPRELOAD_STARTINTAKEGPP,
         STARTINTAKEGPP_ENDINTAKEGPP,
         ENDINTAKEGPP_SHOOTGPP,
-        SHOOTPPG,
-        SHOOTGPP_END,
+        SHOOTGPP_STARTINTAKEPGP,
+        STARTINTAKEPGP_ENDINTAKEPGP,
+        ENDINTAKEPGP_SHOOTPGP,
+        SHOOTPGP_STARTINTAKEPPG,
+        STARTINTAKEPPG_ENDINTAKEPPG,
+        ENDINTAKEPPG_SHOOTPPG,
         DONE,
     }
-    PathStateB pathState;
-    private final Pose startPose = new Pose(20, 123.000, Math.toRadians (143));
-    private final Pose shootPreloadPose = new Pose (44.113, 99.603,Math.toRadians(180));
-    private final Pose startIntakeGPPPose = new Pose (50.352, 84.071,Math.toRadians(180));
-    private final Pose endIntakeGPPPose = new Pose (24.184, 83.184,Math.toRadians(180));
-    private final Pose startClear1 = new Pose (34, 75,Math.toRadians(180));
-    private final Pose endClear1  = new Pose (19,77.5,Math.toRadians(180));
-    private final Pose shootGPPPose = new Pose (42.4,88,Math.toRadians(180));
-    private final Pose shootPPGstartIntakePGPcontrolPoint = new Pose (47.71,71.302,Math.toRadians(180));
-    private final Pose startIntakePGPPose = new Pose (50.844,59.73,Math.toRadians(180));
-    private final Pose endIntakePGPPose = new Pose (14,59.119,Math.toRadians(180));
-    private final Pose shootPGPPose = new Pose (42.4,88,Math.toRadians(180));//new Pose (60.923, 84.046,Math.toRadians(180));
-    private final Pose startIntakePPG = new Pose (50.844,35.707, Math.toRadians(180));
-    private final Pose endIntakePPG = new Pose (14,35.330, Math.toRadians(180));
-    private final Pose shootPPG = new Pose (42.4,88,Math.toRadians(180));
-    //new Pose (60.476,83.973, Math.toRadians(180));
-    private final Pose end = new Pose (56,36,180);
 
-    private PathChain startPos_ShootPreloadPos, shootPreload_startIntakePPG, startIntakePPG_endIntakePPG;
-    private PathChain endIntakePPG_shootPPG, shootPPG_startIntakePGP, startIntakePGP_endIntakePGP;
-    private PathChain endIntakePGP_shootPGP, shootPGP_startIntakeGPP,startIntakeGPP_endIntakeGPP;
-    private PathChain endIntakeGPP_shootGPP,endIntakePPG_startClear1, startClear1_endClear1, endClear1_shootPPG;
-    private PathChain shootPPG_end;
+    PathState pathState;
+    private final Pose startPose = new Pose(20.000, 123.000, Math.toRadians (143));
+    private final Pose shootPreloadPose = new Pose (35.49,107.99,Math.toRadians(143));
+    private final Pose startIntakeGPPPose = new Pose (50.35,84.07,Math.toRadians(180));
+    private final Pose endIntakeGPPPose = new Pose (19.05,84.58,Math.toRadians(180));
+    private final Pose shootGPPPose = new Pose (60.47,83.97,Math.toRadians(180));
+    private final Pose shootPPGstartIntakePGPcontrolPoint = new Pose (64.71,64.71,Math.toRadians(180));
+    private final Pose startIntakePGPPose = new Pose (42.921,59.73,Math.toRadians(180));
+    private final Pose endIntakePGPPose = new Pose (22.158,59.81,Math.toRadians(180));
+    private final Pose shootPGPPose = new Pose (60.92,84.04,Math.toRadians(190));
+    private final Pose startIntakePPG = new Pose (43.122,35.70);
+    private final Pose endIntakePPG = new Pose (21.81,35.56, Math.toRadians(180));
+    private final Pose shootPPG = new Pose (62.42,107.33, Math.toRadians(180));
 
+    private PathChain startPos_ShootPreloadPos, shootPreload_startIntakeGPP, startIntakeGPP_endIntakeGPP;
+    private PathChain endIntakeGPP_shootGPP, shootGPP_startIntakePGP, startIntakePGP_endIntakePGP;
+    private PathChain endIntakePGP_shootPGP, shootPGP_startIntakePPG,startIntakePPG_endIntakePPG;
+    private PathChain endIntakePPG_shootPPG;
 
     public void buildPaths(){
         //put in coordinates for start pose and end pose
         startPos_ShootPreloadPos = follower.pathBuilder()
                 .addPath(new BezierLine(startPose, shootPreloadPose))
                 .setLinearHeadingInterpolation(startPose.getHeading(), shootPreloadPose.getHeading()).build();
-        shootPreload_startIntakePPG = follower.pathBuilder()
+        shootPreload_startIntakeGPP = follower.pathBuilder()
                 .addPath(new BezierLine (shootPreloadPose, startIntakeGPPPose))
                 .setLinearHeadingInterpolation(shootPreloadPose.getHeading(), startIntakeGPPPose.getHeading())
                 .build();
-        startIntakePPG_endIntakePPG = follower.pathBuilder()
+        startIntakeGPP_endIntakeGPP = follower.pathBuilder()
                 .addPath(new BezierLine (startIntakeGPPPose, endIntakeGPPPose))
                 .setLinearHeadingInterpolation(startIntakeGPPPose.getHeading(), endIntakeGPPPose.getHeading())
                 .build();
-        endIntakePPG_startClear1 = follower.pathBuilder().addPath(new BezierLine (endIntakeGPPPose, startClear1))
-                .setLinearHeadingInterpolation(endIntakeGPPPose.getHeading(), startClear1.getHeading())
+        endIntakeGPP_shootGPP = follower.pathBuilder()
+                .addPath(new BezierLine (endIntakeGPPPose, shootGPPPose))
+                .setLinearHeadingInterpolation(endIntakeGPPPose.getHeading(), shootGPPPose.getHeading())
                 .build();
-        startClear1_endClear1 = follower.pathBuilder().addPath(new BezierLine (startClear1, endClear1))
-                .setLinearHeadingInterpolation(endIntakeGPPPose.getHeading(), endClear1.getHeading())
-                .build();
-        endClear1_shootPPG = follower.pathBuilder().addPath(new BezierLine (endClear1,shootPPG))
-                .setLinearHeadingInterpolation(endClear1.getHeading(),shootPPG.getHeading())
-                .build();
-
-        shootPPG_startIntakePGP = follower.pathBuilder()
+        shootGPP_startIntakePGP = follower.pathBuilder()
                 .addPath(new BezierCurve(shootGPPPose, shootPPGstartIntakePGPcontrolPoint,startIntakePGPPose))
                 .setLinearHeadingInterpolation(shootGPPPose.getHeading(), startIntakePGPPose.getHeading())
                 .build();
@@ -141,275 +107,199 @@ public class BlueCloseAuto extends OpMode {
                 .addPath(new BezierLine (endIntakePGPPose, shootPGPPose))
                 .setLinearHeadingInterpolation(endIntakePGPPose.getHeading(), shootPGPPose.getHeading())
                 .build();
-        shootPGP_startIntakeGPP = follower.pathBuilder()
+        shootPGP_startIntakePPG = follower.pathBuilder()
                 .addPath(new BezierLine (shootPGPPose, startIntakePPG))
                 .setLinearHeadingInterpolation(shootPGPPose.getHeading(), startIntakePPG.getHeading())
                 .build();
-        startIntakeGPP_endIntakeGPP = follower.pathBuilder()
+        startIntakePPG_endIntakePPG = follower.pathBuilder()
                 .addPath(new BezierLine (startIntakePPG, endIntakePPG))
                 .setLinearHeadingInterpolation(startIntakePPG.getHeading(), endIntakePPG.getHeading())
                 .build();
-        endIntakeGPP_shootGPP = follower.pathBuilder()
-                .addPath(new BezierLine (endIntakePPG, end))
-                .setLinearHeadingInterpolation(endIntakePPG.getHeading(), end.getHeading())
+        endIntakePPG_shootPPG = follower.pathBuilder()
+                .addPath(new BezierLine (endIntakePPG, shootPPG))
+                .setLinearHeadingInterpolation(endIntakePPG.getHeading(), shootPPG.getHeading())
                 .build();
-        shootPPG_end = follower.pathBuilder()
-                .addPath(new BezierLine (shootPPG, end))
-                .setLinearHeadingInterpolation(shootPPG.getHeading(), end.getHeading())
-                .build();
-
-
 
 
     }
-    public void statePathUpdate() {
-        switch (pathState) {
-            case START:
-                targetFlywheelSpeed = shootPreloadSpeed;
-                targetHoodAngle = preloadHood;
+    public void statePathUpdate(){
+        switch(pathState){
 
-                if (pathTimer.getElapsedTimeSeconds() < 0.1) {
-                    intake.setIntakePower(1);
+            case DETECTAPRILTAG:
+                LLResult result = limelight.getLatestResult();
+                List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
+                intake.setIntakePower(-0.25);
 
-                    follower.followPath(startPos_ShootPreloadPos);
+                double maxPosition=-10000;
+                for (LLResultTypes.FiducialResult fiducial : fiducials) {
+                    int id = fiducial.getFiducialId(); // The ID number of the fiducial
+                    double x = fiducial.getTargetXDegrees(); // Where it is (left-right)
+
+                    if (x>maxPosition){
+                        maxPosition = x;
+                        idb =id;
+                    }
                 }
-                if (!follower.isBusy() && turret.getFlywheelVelocity() > turret.getFlywheelVelocity() - 75) {
-                    intake.shootBalls();
+                telemetry.addData("Fiducial", idb);
+                if (idb ==21){
                     opModeTimer.resetTimer();
-                    spindex.startRotate(1);
-                    setPathState(PathStateB.START_SHOOTPRELOAD);
+                    ppgGoToPosition =0;
+                    pgpGoToPosition =100;
+                    gppGoToPosition= 200;
+                    turret.switchTurretState();
+                    spindex.goToPosition(gppGoToPosition);
+                    follower.followPath(startPos_ShootPreloadPos);
+                    setPathState(PathState.START_SHOOTPRELOAD);
 
+                }
+                if (idb ==22){
+                    turret.switchTurretState();
+                    opModeTimer.resetTimer();
+                    ppgGoToPosition =200;
+                    pgpGoToPosition =0;
+                    gppGoToPosition= 100;
+                    spindex.goToPosition(gppGoToPosition);
+                    follower.followPath(startPos_ShootPreloadPos);
+                    setPathState(PathState.START_SHOOTPRELOAD);
+
+                }
+                if (idb ==23){
+                    turret.switchTurretState();
+                    opModeTimer.resetTimer();
+                    ppgGoToPosition =100;
+                    pgpGoToPosition =200;
+                    gppGoToPosition= 0;
+                    spindex.goToPosition(gppGoToPosition);
+                    follower.followPath(startPos_ShootPreloadPos);
+                    setPathState(PathState.START_SHOOTPRELOAD);
 
                 }
                 break;
-            case START_SHOOTPRELOAD:
-                intake.shootBalls();
 
+
+
+
+            case  START_SHOOTPRELOAD:
+
+                intake.shootBalls();
+                spindex.setSpindexPower(1);
+                intake.setIntakePower(1);
 
                 if (!follower.isBusy()) {
-                    intake.shootBalls();
-                    spindex.runSpindexToggle(1);
-                    if (opModeTimer.getElapsedTimeSeconds() > 3) {
 
+                   if(opModeTimer.getElapsedTimeSeconds()>5) {
+                       opModeTimer.resetTimer();
+                       follower.followPath(shootPreload_startIntakeGPP);
+                       setPathState(PathState.SHOOTPRELOAD_STARTINTAKEGPP);
+                   }
+                }
+
+                break;
+            case SHOOTPRELOAD_STARTINTAKEGPP:
+                spindex.goToPosition(0);
+                intake.intakeBalls();
+
+                if (!follower.isBusy()){
+                    opModeTimer.resetTimer();
+                    follower.followPath(startIntakeGPP_endIntakeGPP);
+                    intake.setIntakePower(-0.25);
+                    setPathState(STARTINTAKEGPP_ENDINTAKEGPP);
+
+                }
+                break;
+            case STARTINTAKEGPP_ENDINTAKEGPP:
+                spindex.goToPosition(0);
+                intake.intakeBalls();
+                if (!follower.isBusy()){
+                    opModeTimer.resetTimer();
+                    spindex.goToPosition(pgpGoToPosition);
+                    follower.followPath(endIntakeGPP_shootGPP);
+                    setPathState(PathState.ENDINTAKEGPP_SHOOTGPP);
+                }
+                break;
+                
+            case ENDINTAKEGPP_SHOOTGPP:
+                spindex.goToPosition(gppGoToPosition);
+                if (!follower.isBusy()){
+                    intake.shootBalls();
+                    spindex.setSpindexPower(1);
+                    if (opModeTimer.getElapsedTimeSeconds()>3){
                         opModeTimer.resetTimer();
-                        follower.followPath(shootPreload_startIntakePPG);
-                        setPathState(PathStateB.SHOOTPRELOAD_STARTINTAKEPPG);
+                        follower.followPath(shootGPP_startIntakePGP);
+                        setPathState(PathState.SHOOTGPP_STARTINTAKEPGP);
+
                     }
                 }
 
-
-
-
                 break;
-            case SHOOTPRELOAD_STARTINTAKEPPG:
+
+            case SHOOTGPP_STARTINTAKEPGP:
+                spindex.goToPosition(0);
                 intake.intakeBalls();
-                targetFlywheelSpeed = ppgSpeed;
-                targetHoodAngle = ppgHood;
-
                 if (!follower.isBusy()){
-                    opModeTimer.resetTimer();
-                    follower.setMaxPower(0.75);
-                    spindex.goToPosition(344);
-                    follower.followPath(startIntakePPG_endIntakePPG);
-
-                    intake.setIntakePower(1);
-                    setPathState(PathStateB.STARTINTAKEPPG_ENDINTAKEPPG);
-
-                }
-                break;
-            case STARTINTAKEPPG_ENDINTAKEPPG:
-                spindex.goToPosition(344);
-                intake.intakeBalls();
-                follower.setMaxPower(0.75);
-                if (!follower.isBusy()){
-                    opModeTimer.resetTimer();
-                    follower.followPath(endIntakePPG_startClear1);
-                    setPathState(PathStateB.ENDINTAKEPPG_STARTCLEAR1);
-                    follower.setMaxPower(1);
-                    intake.setIntakePower(0);
-                }
-                break;
-
-            case ENDINTAKEPPG_STARTCLEAR1:
-                intake.setIntakePower(0);
-                spindex.goToPosition(344);
-
-
-                if (!follower.isBusy()){
-                    follower.setMaxPower(0.5);
-                    opModeTimer.resetTimer();
-                    follower.followPath(startClear1_endClear1);
-                    setPathState(PathStateB.STARTCLEAR1_ENDCLEAR1);
-
-
-                }
-                break;
-
-            case STARTCLEAR1_ENDCLEAR1:
-                intake.setIntakePower(1);
-                spindex.goToPosition(344);
-
-                if (!follower.isBusy()&& opModeTimer.getElapsedTimeSeconds()>1.5){
-                    opModeTimer.resetTimer();
-                    follower.followPath(endClear1_shootPPG);
-
-                    setPathState(PathStateB.ENDCLEAR1_SHOOTPPG);
-                    follower.setMaxPower(1);
-
-                }
-                break;
-
-            case ENDCLEAR1_SHOOTPPG:
-
-
-
-
-
-                follower.setMaxPower(1);
-                if (!follower.isBusy()){
-
-                    intake.shootBalls();
-                    intake.shootBalls();
-                    spindex.runSpindexToggle(1);
-                    opModeTimer.resetTimer();
-
-                    setPathState(PathStateB.SHOOTPPG);
-
-
-
-                }
-
-                break;
-            case SHOOTPPG:
-                intake.shootBalls();
-                spindex.runSpindexToggle(1);
-
-                if (opModeTimer.getElapsedTimeSeconds()>3.5) {
-                    spindex.goToPosition(344);
-                    targetFlywheelSpeed= ppgSpeed;
-                    targetHoodAngle= pgpHood;
-                    follower.followPath(shootPPG_startIntakePGP);
-                    setPathState(PathStateB.SHOOTPPG_STARTINTAKEPGP);
-
-
-                }
-                break;
-
-
-            case SHOOTPPG_STARTINTAKEPGP:
-                intake.intakeBalls();
-                spindex.goToPosition(344);
-                if (!follower.isBusy()){
-                    follower.setMaxPower(1);
-
                     opModeTimer.resetTimer();
                     follower.followPath(startIntakePGP_endIntakePGP);
-                    setPathState(PathStateB.STARTINTAKEPGP_ENDINTAKEPGP);
+                    setPathState(PathState.STARTINTAKEPGP_ENDINTAKEPGP);
                 }
                 break;
             case STARTINTAKEPGP_ENDINTAKEPGP:
-                spindex.goToPosition(344);
+                spindex.goToPosition(0);
                 intake.intakeBalls();
                 if (!follower.isBusy()){
                     opModeTimer.resetTimer();
-                    follower.setMaxPower(1);
+                    spindex.goToPosition(pgpGoToPosition);
                     follower.followPath(endIntakePGP_shootPGP);
-                    setPathState(PathStateB.ENDINTAKEPGP_SHOOTPGP);
-
-
+                    setPathState(PathState.ENDINTAKEPGP_SHOOTPGP);
                 }
                 break;
 
             case ENDINTAKEPGP_SHOOTPGP:
-                spindex.goToPosition(344);
-
+                spindex.goToPosition(pgpGoToPosition);
                 if (!follower.isBusy()){
                     intake.shootBalls();
-                    spindex.startRotate(1);
+                    spindex.setSpindexPower(1);
+                    if (opModeTimer.getElapsedTimeSeconds()>3){
+                        opModeTimer.resetTimer();
+                        follower.followPath(shootPGP_startIntakePPG);
+                        setPathState(PathState.SHOOTPGP_STARTINTAKEPPG);
 
-                    opModeTimer.resetTimer();
-                    targetFlywheelSpeed = ppgSpeed;
-                    targetHoodAngle = ppgHood;
-
-                    setPathState(PathStateB.SHOOTPGP);
-
-
+                    }
                 }
                 break;
-            case SHOOTPGP:
-                intake.shootBalls();
-                spindex.runSpindexToggle(1);
-
-                if (opModeTimer.getElapsedTimeSeconds()>3.5) {
-                    spindex.goToPosition(344);
-                    targetFlywheelSpeed= ppgSpeed;
-                    targetHoodAngle= pgpHood;
-                    follower.followPath(shootPGP_startIntakeGPP);
-                    setPathState(PathStateB.SHOOTPGP_STARTINTAKEGPP);
-
-
-                }
-                break;
-            case SHOOTPGP_STARTINTAKEGPP:
+            case SHOOTPGP_STARTINTAKEPPG:
+                spindex.goToPosition(0);
                 intake.intakeBalls();
-                spindex.goToPosition(344);
                 if (!follower.isBusy()){
-                    follower.setMaxPower(1);
                     opModeTimer.resetTimer();
-                    follower.followPath(startIntakeGPP_endIntakeGPP);
-                    setPathState(PathStateB.STARTINTAKEGPP_ENDINTAKEGPP);
+                    follower.followPath(startIntakePPG_endIntakePPG);
+                    setPathState(PathState.STARTINTAKEPPG_ENDINTAKEPPG);
                 }
                 break;
-            case STARTINTAKEGPP_ENDINTAKEGPP:
+            case STARTINTAKEPPG_ENDINTAKEPPG:
+                spindex.goToPosition(0);
                 intake.intakeBalls();
-                spindex.goToPosition(344);
                 if (!follower.isBusy()){
-                    follower.setMaxPower(1);
-
+                    intake.shootBalls();
                     opModeTimer.resetTimer();
-                    follower.followPath(endIntakeGPP_shootGPP);
-                    spindex.startRotate(1);
-                    setPathState(PathStateB.ENDINTAKEGPP_SHOOTGPP);
+                    spindex.goToPosition(ppgGoToPosition);
+                    follower.followPath(endIntakePPG_shootPPG);
+                    setPathState(PathState.ENDINTAKEPPG_SHOOTPPG);
                 }
                 break;
-            case ENDINTAKEGPP_SHOOTGPP:
-
-
-
+            case ENDINTAKEPPG_SHOOTPPG:
+                spindex.goToPosition(ppgGoToPosition);
                 if (!follower.isBusy()){
-                    setPathState(PathStateB.DONE);
-                    opModeTimer.resetTimer();
-                    targetFlywheelSpeed= ppgSpeed;
-                    targetHoodAngle= pgpHood;
+                    spindex.setSpindexPower(1);
+                    if (opModeTimer.getElapsedTimeSeconds()>3){
+                        opModeTimer.resetTimer();
 
+                        setPathState(PathState.DONE);
 
-
-
+                    }
                 }
-                break;
-
-            case SHOOTGPP:
-                intake.shootBalls();
-                spindex.runSpindexToggle(1);
-
-                if (opModeTimer.getElapsedTimeSeconds()>3.5) {
-
-                    follower.followPath(shootPPG_end );
-                    setPathState(PathStateB.SHOOTGPP_END);
-
-
-                }
-                break;
-
-            case SHOOTGPP_END:
-                spindex.runSpindexToggle(1);
-
-
                 break;
 
             case DONE:
-                spindex.goToPosition(344);
-                turret.angularVelocityPIDF(180);
                 telemetry.addLine("Finished");
                 break;
 
@@ -420,7 +310,7 @@ public class BlueCloseAuto extends OpMode {
 
         }
     }
-    public void setPathState(PathStateB newState){
+    public void setPathState(PathState newState){
         pathState=newState;
         pathTimer.resetTimer();
     }
@@ -429,19 +319,13 @@ public class BlueCloseAuto extends OpMode {
 
     @Override
     public void init(){
-        follower = Constants.createFollower(hardwareMap);
-        follower.setPose(startPose);
-        pathState = PathStateB.START;
+        pathState = PathState.DETECTAPRILTAG;
         pathTimer = new Timer();
         opModeTimer = new Timer();
 
         intake = new Intake(hardwareMap);
         spindex = new Spindex (hardwareMap);
-        turret = new Turret(hardwareMap, "blue",follower, true);
-        turret.resetTurret();
-        turret.switchHoodAdjust();
-        turret.disableFlywheeladjust();
-        turret.disableHoodAdjust();
+        turret = new Turret(hardwareMap, "blue",40,false);
 
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         limelight.setPollRateHz(100); // This sets how often we ask Limelight for data (100 times per second)
@@ -449,11 +333,9 @@ public class BlueCloseAuto extends OpMode {
         limelight.pipelineSwitch(0);
 
 
-
         buildPaths();
+        follower.setPose(startPose);
 
-
-    }
 
     public void start(){
         opModeTimer.resetTimer();
@@ -463,26 +345,27 @@ public class BlueCloseAuto extends OpMode {
     @Override
     public void loop(){
         follower.update();
-        turret.updateFollower(follower);
         double x = follower.getPose().getX();
         double y = follower.getPose().getY();
         double h = Math.toDegrees(follower.getPose().getHeading());
-        turret.setFLyWheelSpeedPID(targetFlywheelSpeed);
-        turret.setHoodAngle(targetHoodAngle);
+        turret.setFlyWheelSpeed(-1200);
 
         telemetry.addData("X:", x);
         telemetry.addData("Y:", y);
         telemetry.addData("H:", h);
 
-        turret.runTurret();
+
+
+        turret.autoHoodAnglelut(x, y);
+
+        turret.aimTurretOriginal(x, y, h);
 
 
         statePathUpdate();
-        telemetry.addData("Follower Busy", follower.isBusy());
-        telemetry.addData("Turret Aim", turret.getTargetAngle (follower.getPose().getX(),follower.getPose().getY()));
         telemetry.addData("pathState", pathState.toString());
-        telemetry.addData ("turret Target", turret.getTargetAngle(x,y));
+        telemetry.addData ("turret Target", turret.getTargetBlue(x,y));
     }
 }
+
 
 

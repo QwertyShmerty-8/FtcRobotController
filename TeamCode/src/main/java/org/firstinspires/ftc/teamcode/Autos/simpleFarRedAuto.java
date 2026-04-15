@@ -48,9 +48,9 @@ public class simpleFarRedAuto extends OpMode {
     public void statePathUpdate(){
         switch(pathState){
             case  SHOOTPRELOAD:
-                turret.setFlywheelVelocity(-1200);
+                turret.setFlyWheelSpeed(-1200);
 
-                if(turret.getFlywheelVelocity()<0) {
+                if(turret.getFlyWheelSpeed()<0) {
                     intake.shootBalls();
                     intake.setIntakePower(1);
                     spindex.setSpindexPower(1);
@@ -96,7 +96,7 @@ public class simpleFarRedAuto extends OpMode {
 
         intake = new Intake(hardwareMap);
         spindex = new Spindex (hardwareMap);
-        turret = new Turret(hardwareMap, "red",follower,true);
+        turret = new Turret(hardwareMap, "red",0,true);
 
 
         follower = Constants.createFollower(hardwareMap);
@@ -122,11 +122,11 @@ public class simpleFarRedAuto extends OpMode {
 
 
 
+        turret.autoHoodAnglelut(x, y);
 
+        turret.aimTurretOriginal(x, y, h);
 
         follower.update();
-        turret.updateFollower(follower);
-        turret.runTurret();
         statePathUpdate();
         telemetry.addData("pathState", pathState.toString());
     }
