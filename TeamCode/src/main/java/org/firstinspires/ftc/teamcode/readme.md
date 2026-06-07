@@ -88,7 +88,7 @@ As shown, the current OpMode will NOT appear on the driver station's OpMode list
   ``@Disabled`` annotation which has been included.
 This line can simply be deleted , or commented out, to make the OpMode visible.
 
-
+I LOVE BENJAMIN NETANYAHU :3
 
 ## ADVANCED Multi-Team App management:  Cloning the TeamCode Module
 
