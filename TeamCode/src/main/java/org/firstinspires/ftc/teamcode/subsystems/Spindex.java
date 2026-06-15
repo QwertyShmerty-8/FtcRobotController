@@ -140,6 +140,14 @@ public class Spindex {
         goToPosition(47.5);
     }
     public void runSpindexToggle(double power){
+        if (runTimer.seconds()>0.05){
+            spindex.setPower(0);
+            runTimer.reset();
+        } else {
+            spindex.setPower(power);
+        }
+    }
+    public void runSpindexToggleAuto(double power){
         if (runTimer.seconds()>0.1){
             spindex.setPower(power);
             runTimer.reset();

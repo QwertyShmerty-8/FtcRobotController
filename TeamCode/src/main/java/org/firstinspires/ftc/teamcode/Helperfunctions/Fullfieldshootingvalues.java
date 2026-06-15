@@ -10,8 +10,8 @@ public class Fullfieldshootingvalues {
     double firstNumber;
     double lastNumber;
 
-    public Fullfieldshootingvalues(String goalColor){
-        isBlue = goalColor.equalsIgnoreCase("blue");
+    public Fullfieldshootingvalues(Boolean isBluex){
+        isBlue =isBluex;
 
 
         //Hood Angle Data (Distance, Hood Angle)

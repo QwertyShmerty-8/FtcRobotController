@@ -97,7 +97,7 @@ public class simpleFarBlueAuto extends OpMode {
 
         intake = new Intake(hardwareMap);
         spindex = new Spindex (hardwareMap);
-        turret = new Turret(hardwareMap, "blue",follower,true);
+        turret = new Turret(hardwareMap, true,follower,true);
 
 
         follower = Constants.createFollower(hardwareMap);

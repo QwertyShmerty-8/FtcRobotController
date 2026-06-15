@@ -15,6 +15,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Supplier;
 import org.firstinspires.ftc.teamcode.Helperfunctions.Fullfieldshootingvalues;
+import org.firstinspires.ftc.teamcode.Helperfunctions.Location;
 import org.firstinspires.ftc.teamcode.Helperfunctions.fancyButton;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.subsystems.aDrivetrain;
@@ -44,7 +45,7 @@ public class farRedTeleop extends OpMode {
     private aDrivetrain drive;
 
     private Follower follower;
-    public static Pose startingPose = new Pose (88.62,56,Math.toRadians(90));
+    public static Pose startingPose = Location.START;
     public static Pose resetPose = new Pose(123,123,Math.toRadians(35));
 
     private Supplier<PathChain> pathChain;
@@ -56,11 +57,15 @@ public class farRedTeleop extends OpMode {
     public void init(){
         spindexTimer = new ElapsedTime();
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(startingPose == null ? new Pose() : startingPose);
+        if (Location.START !=null) {
+            follower.setStartingPose(Location.START);
+        } else {
+            follower.setPose(new Pose(0,0,0));
+        }
         follower.update();
         intake = new Intake(hardwareMap);
         spindex = new Spindex (hardwareMap);
-        turret = new Turret(hardwareMap, "red",follower,true);
+        turret = new Turret(hardwareMap, false,follower,true);
         drive = new aDrivetrain(hardwareMap);
 
 
@@ -69,7 +74,7 @@ public class farRedTeleop extends OpMode {
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
-        shootingvalues = new Fullfieldshootingvalues("red");
+        shootingvalues = new Fullfieldshootingvalues(false);
         hoodAdjustOnToggle = new fancyButton( fancyButton.PressType.Toggle);
         slowModeToggle = new fancyButton(fancyButton.PressType.Toggle);
         turretFreezeToggle = new fancyButton (fancyButton.PressType.Toggle);
@@ -88,6 +93,18 @@ public class farRedTeleop extends OpMode {
         follower.update();
     }
     public void loop(){
+        if (gamepad2.dpadLeftWasPressed()){
+            turret.incrementTurretAngleAdjust();
+        }
+        if (gamepad2.dpadRightWasPressed()){
+            turret.decrementTurretAngleAdjust();
+        }
+        if (gamepad2.dpadUpWasPressed()){
+            turret.incrementDistanceAdjust();
+        }
+        if (gamepad2.dpadDownWasPressed()){
+            turret.decrementDistanceAdjust();
+        }
         if (gamepad2.a){
             intake.setIntakePower(-1);
         }else if(gamepad1.right_trigger>0.25){
@@ -169,6 +186,7 @@ public class farRedTeleop extends OpMode {
         }
 
         //Gamepd2 controls
+
         if (gamepad2.left_trigger>0.25){
             spindex.runSpindexToggle(1);
             spindexTimer.reset();
@@ -186,6 +204,10 @@ public class farRedTeleop extends OpMode {
         if (gamepad2.left_stick_button){
             follower.setPose(resetPose);
         }
+
+        telemetry.addData("Turret Angle Adjust" ,turret.getTurretAngleAdjust());
+        telemetry.addData("Distance Adjust", turret.getTurretDistanceAdjust());
+
 
 
 

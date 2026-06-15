@@ -25,6 +25,7 @@ import org.firstinspires.ftc.teamcode.Helperfunctions.Fullfieldshootingvalues;
 
 public class Turret {
     double turretAngleAdjust;
+    double turretDistanceAdjust;
 
     DcMotorEx flyWheel;
     Servo hood;
@@ -40,6 +41,7 @@ public class Turret {
     boolean flywheelOn = true;
     boolean movingWhileShooting= false;
     double startTurretPosition;
+
 
     public static double Kpturret=0.1;
     public static double Kiturret;
@@ -71,7 +73,7 @@ public class Turret {
     private final double TARGET_Y_RED=144;
 
 
-    public Turret(HardwareMap hardwareMap, String goalColor, Follower followerx, boolean turretOnx) {
+    public Turret(HardwareMap hardwareMap, boolean isBluex, Follower followerx, boolean turretOnx) {
         follower = followerx;
         turretMotor = hardwareMap.get(DcMotor.class, "turret");
         flyWheel = hardwareMap.get(DcMotorEx.class, "flyWheel");
@@ -80,7 +82,7 @@ public class Turret {
         turretEncoder = hardwareMap.get(AnalogInput.class, "encoder");
 
 
-        isBlue = goalColor.equalsIgnoreCase("blue");
+        isBlue = isBluex;
         turretOn = turretOnx;
         hoodOn = true;
 
@@ -92,7 +94,9 @@ public class Turret {
 
         turretOffset = calculateTurretOffset();
 
-        values = new Fullfieldshootingvalues(goalColor);
+        values = new Fullfieldshootingvalues(isBlue);
+        turretAngleAdjust = 0;
+        turretDistanceAdjust = 0;
     }
 
     public void flyWheelPidf(double distance) {
@@ -251,11 +255,31 @@ public class Turret {
             targetAngle = Math.toDegrees(Math.atan2(TARGET_Y_RED- y, TARGET_X_RED - x));
         }
 
-        return targetAngle+turretAngleAdjust;
+        return targetAngle;
     }
     public void updateTurretAngleAdjust(double x){
         turretAngleAdjust = x;
     }
+    public void incrementTurretAngleAdjust(){
+        turretAngleAdjust +=3.5;
+    }
+
+    public void decrementTurretAngleAdjust(){
+        turretAngleAdjust -=3.5;
+    }
+    public double getTurretAngleAdjust(){
+        return turretAngleAdjust;
+    }
+    public void incrementDistanceAdjust(){
+        turretDistanceAdjust +=5;
+    }
+    public void decrementDistanceAdjust(){
+        turretDistanceAdjust -=5;
+    }
+    public double getTurretDistanceAdjust(){
+        return turretDistanceAdjust;
+    }
+
 
     public void resetTurret(){
         turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -317,6 +341,7 @@ public class Turret {
         return ((turretEncoder.getVoltage() / 3.2 * 120 + offset) % 120)-60;
 
     }
+
     public Pose getCurrentPose(){
         return follower.getPose();
     }
@@ -347,6 +372,8 @@ public class Turret {
             targetAngle = getTargetAngle(x,y);
             targetDistance = getDistance(x,y);
         }
+        targetAngle = targetAngle +turretAngleAdjust;
+        targetDistance = targetDistance + turretDistanceAdjust;
         if (hoodOn){
             hood.setPosition(values.hoodanglelut(targetDistance));
         }

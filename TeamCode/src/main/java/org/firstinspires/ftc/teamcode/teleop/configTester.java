@@ -39,7 +39,7 @@ public class configTester extends OpMode {
         follower.update();
         intake = new Intake(hardwareMap);
         spindex = new Spindex (hardwareMap);
-        turret = new Turret(hardwareMap, "blue",follower,false);
+        turret = new Turret(hardwareMap, true,follower,false);
         Pose startPose = new Pose(72,72,0);
         follower.setStartingPose(startPose);
         drive = new aDrivetrain(hardwareMap);

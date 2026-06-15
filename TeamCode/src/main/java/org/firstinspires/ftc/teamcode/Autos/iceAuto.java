@@ -7,6 +7,7 @@ import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
@@ -15,7 +16,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Spindex;
 import org.firstinspires.ftc.teamcode.subsystems.Turret;
 import org.firstinspires.ftc.teamcode.subsystems.aDrivetrain;
 
-
+@Disabled
 @Autonomous
 
 public class iceAuto extends OpMode {
@@ -105,7 +106,7 @@ public class iceAuto extends OpMode {
 
         intake = new Intake(hardwareMap);
         spindex = new Spindex(hardwareMap);
-        turret = new Turret(hardwareMap, "red", follower, true);
+        turret = new Turret(hardwareMap, false, follower, true);
 
 
         follower = Constants.createFollower(hardwareMap);

@@ -10,6 +10,7 @@ import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
+import org.firstinspires.ftc.teamcode.Helperfunctions.Location;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Spindex;
@@ -176,7 +177,7 @@ public class BlueFarAuto extends OpMode {
 
         intake = new Intake(hardwareMap);
         spindex = new Spindex (hardwareMap);
-        turret = new Turret(hardwareMap, "blue",follower,true);
+        turret = new Turret(hardwareMap, true,follower,true);
         turret.resetTurret();
 
 
@@ -207,11 +208,9 @@ public class BlueFarAuto extends OpMode {
         telemetry.addData("X:", x);
         telemetry.addData("Y:", y);
         telemetry.addData("H:", h);
-if (pathState != frPathState.DONE) {
-    turret.runTurret();
-} else {
-    turret.angularVelocityPIDF(90);
-}
+        Location.START = follower.getPose();
+        Location.turretPosition=turret.getTurretPosition();
+
 
 
 

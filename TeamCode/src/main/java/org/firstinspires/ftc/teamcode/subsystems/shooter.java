@@ -8,7 +8,7 @@ public class shooter {
     Turret turret;
     public shooter (HardwareMap hardwareMap, String goalColor, Follower follower){
         spindex = new Spindex (hardwareMap);
-        turret = new Turret(hardwareMap, goalColor,follower, true);
+       // turret = new Turret(hardwareMap, goalColor,follower, true);
     }
 
     public void shoot(){

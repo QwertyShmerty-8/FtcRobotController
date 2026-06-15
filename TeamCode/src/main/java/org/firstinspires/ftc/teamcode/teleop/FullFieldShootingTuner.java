@@ -52,7 +52,7 @@ public class FullFieldShootingTuner extends OpMode{
 
         intake = new Intake(hardwareMap);
         spindex = new Spindex (hardwareMap);
-        turret = new Turret(hardwareMap, "blue",follower,false);
+        turret = new Turret(hardwareMap, true,follower,false);
         drive = new aDrivetrain(hardwareMap);
 
 

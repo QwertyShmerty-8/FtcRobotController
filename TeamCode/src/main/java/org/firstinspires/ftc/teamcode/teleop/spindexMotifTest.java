@@ -58,7 +58,7 @@ public class spindexMotifTest extends OpMode {
 
         spindex = new Spindex(hardwareMap);
         intake = new Intake(hardwareMap);
-        turret = new Turret(hardwareMap, "blue", follower,true);
+        turret = new Turret(hardwareMap, true, follower,true);
         encoder = hardwareMap.get(AnalogInput.class, "spindexencoder");
 
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
