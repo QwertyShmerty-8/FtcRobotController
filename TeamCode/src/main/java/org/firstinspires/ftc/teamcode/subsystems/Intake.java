@@ -78,24 +78,12 @@ public void forwardIntakeDirection(){
 public void switchSortMode(){
         sortMode = !sortMode;
 }
-public void configureSortMode(boolean x, ElapsedTime time){
-
-        if(sortMode){
-        shootBalls();
-        if (time.seconds()>0.5&& x==false){
-            intakeMotor.setPower(-1);
+    public void configureSortMode(){
+        if (sortMode ==true){
+            shootBalls();
+            setIntakePower(-1);
         }
-
-
-            if (x){
-                intakeMotor.setPower(1);
-            } else {
-                intakeMotor.setPower(-1);
-            }
-
-        }
-}
-
+    }
     public boolean getSortMode(){
         return sortMode;
     }
