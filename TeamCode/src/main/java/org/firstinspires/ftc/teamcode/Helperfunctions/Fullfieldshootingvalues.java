@@ -10,21 +10,21 @@ public class Fullfieldshootingvalues {
     double firstNumber;
     double lastNumber;
 
-    public Fullfieldshootingvalues(String goalColor){
-        isBlue = goalColor.equalsIgnoreCase("blue");
+    public Fullfieldshootingvalues(Boolean isBluex){
+        isBlue =isBluex;
 
 
         //Hood Angle Data (Distance, Hood Angle)
         firstNumber = 43.5;
-        Hoodlut.add(43.5,0.13);
-        Hoodlut.add(53.5, 0.41);
-        Hoodlut.add(63.5, 0.55);
-        Hoodlut.add(73.5, 0.62);
-        Hoodlut.add(83.5, 0.75);
-        Hoodlut.add(93.5,0.85);
-        Hoodlut.add(138,0.84);
-        Hoodlut.add(144,0.84);
-        Hoodlut.add(151,0.84);
+        Hoodlut.add(43.5,0.87);
+        Hoodlut.add(53.5, 0.59);
+        Hoodlut.add(63.5, 0.45);
+        Hoodlut.add(73.5, 0.38);
+        Hoodlut.add(83.5, 0.25);
+        Hoodlut.add(93.5,0.15);
+        Hoodlut.add(138,0.15);
+        Hoodlut.add(144,0.15);
+        Hoodlut.add(151,0.15);
 
 
 

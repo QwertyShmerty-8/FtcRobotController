@@ -12,18 +12,28 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.Helperfunctions.Fullfieldshootingvalues;
 
-import org.firstinspires.ftc.teamcode.Helperfunctions.Fullfieldshootingvalues;
-import org.firstinspires.ftc.teamcode.Helperfunctions.myPIDF;
 
 public class Spindex {
+
+    public static double KpSpindex = 0.0065;
+   public static double KiSpindex = 0;
+  public static double KdSpindex =0;
+    public static double KfSpindex =0.01;
+    public ElapsedTime runTimer;
+   public ElapsedTime time;
+
+    Fullfieldshootingvalues values;
+
+  double startEncoderCounts = 0;
+  boolean rotating = false;
+  int encoderCountsNeeded = 0;
+
     DcMotor spindex;
     AnalogInput encoder;
 
     private double lastError = 0;
     private double integralSum = 0;
     private final double dt = 0.02;
-
-    Fullfieldshootingvalues values;
 
     boolean atPosition = false;
 
@@ -35,7 +45,7 @@ public class Spindex {
         spindex.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         spindex.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        pidf = new myPIDF(KpSpindex,KiSpindex,KdSpindex,KfSpindex,-1,1,3);
+    }
 
     public void startRotate(int rotations){
         startEncoderCounts = spindex.getCurrentPosition();
@@ -127,6 +137,16 @@ public class Spindex {
         goToPosition(47.5);
     }
     public void runSpindexToggle(double power){
+        if (runTimer.seconds()>0.05){
+            spindex.setPower(0);
+            runTimer.reset();
+        } else {
+            spindex.setPower(power);
+        }
+    }
+
+
+    public void runSpindexToggleAuto(double power){
         if (runTimer.seconds()>0.1){
             spindex.setPower(power);
             runTimer.reset();

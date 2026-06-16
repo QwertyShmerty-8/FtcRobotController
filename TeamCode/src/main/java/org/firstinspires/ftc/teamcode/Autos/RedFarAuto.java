@@ -10,6 +10,7 @@ import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
+import org.firstinspires.ftc.teamcode.Helperfunctions.Location;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Spindex;
@@ -170,7 +171,7 @@ public class RedFarAuto extends OpMode {
 
         intake = new Intake(hardwareMap);
         spindex = new Spindex (hardwareMap);
-        turret = new Turret(hardwareMap, "blue",follower,true);
+        turret = new Turret(hardwareMap, true,follower,true);
         turret.resetTurret();
 
 
@@ -187,6 +188,8 @@ public class RedFarAuto extends OpMode {
     }
     @Override
     public void loop(){
+        Location.START = follower.getPose();
+        Location.turretPosition=turret.getTurretPosition();
         follower.update();
         turret.updateFollower(follower);
         double x = follower.getPose().getX();

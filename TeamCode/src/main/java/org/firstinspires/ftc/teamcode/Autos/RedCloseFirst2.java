@@ -26,7 +26,7 @@ import java.util.List;
 
 @Autonomous
 
-public class BlueCloseAuto extends OpMode {
+public class RedCloseFirst2 extends OpMode {
 
     private Follower follower;
     private Timer pathTimer, opModeTimer;
@@ -40,16 +40,16 @@ public class BlueCloseAuto extends OpMode {
     double gppGoToPosition;
 
     double shootPreloadSpeed = -1140;
-    double preloadHood= 0.31;
+    double preloadHood= 0.35;
     //target 1150
-    double ppgSpeed = -1200;
-    double ppgHood= 0.43;
+    double ppgSpeed = -1100;
+    double ppgHood= 0.53;
 
     double pgpSpeed= -1200;
-    double pgpHood = 0.43;
+    double pgpHood = 0.33;
 
     double gppSpeed = 1200;
-    double gppHood= 0.43;
+    double gppHood= 0.53;
 
     double targetFlywheelSpeed;
     double targetHoodAngle;
@@ -83,22 +83,22 @@ public class BlueCloseAuto extends OpMode {
         DONE,
     }
     PathStateB pathState;
-    private final Pose startPose = new Pose(20, 123.000, Math.toRadians (143));
-    private final Pose shootPreloadPose = new Pose (44.113, 99.603,Math.toRadians(180));
-    private final Pose startIntakeGPPPose = new Pose (50.352, 84.071,Math.toRadians(180));
-    private final Pose endIntakeGPPPose = new Pose (24.184, 83.184,Math.toRadians(180));
-    private final Pose startClear1 = new Pose (34, 75,Math.toRadians(180));
-    private final Pose endClear1  = new Pose (19,77.5,Math.toRadians(180));
-    private final Pose shootGPPPose = new Pose (42.4,88,Math.toRadians(180));
-    private final Pose shootPPGstartIntakePGPcontrolPoint = new Pose (47.71,71.302,Math.toRadians(180));
-    private final Pose startIntakePGPPose = new Pose (50.844,59.73,Math.toRadians(180));
-    private final Pose endIntakePGPPose = new Pose (14,59.119,Math.toRadians(180));
-    private final Pose shootPGPPose = new Pose (42.4,88,Math.toRadians(180));//new Pose (60.923, 84.046,Math.toRadians(180));
-    private final Pose startIntakePPG = new Pose (50.844,35.707, Math.toRadians(180));
-    private final Pose endIntakePPG = new Pose (14,35.330, Math.toRadians(180));
-    private final Pose shootPPG = new Pose (42.4,88,Math.toRadians(180));
+    private final Pose startPose = new Pose(120, 124.000, Math.toRadians (40));
+    private final Pose shootPreloadPose = new Pose (99.887, 99.603,Math.toRadians(0));
+    private final Pose startIntakeGPPPose = new Pose (93.648, 84.071,Math.toRadians(0));
+    private final Pose endIntakeGPPPose = new Pose (125.816, 83.184,Math.toRadians(0));
+    private final Pose startClear1 = new Pose (110, 75,Math.toRadians(0));
+    private final Pose endClear1  = new Pose (125,77.5,Math.toRadians(0));
+    private final Pose shootGPPPose = new Pose (101.6,88,Math.toRadians(0));
+    private final Pose shootPPGstartIntakePGPcontrolPoint = new Pose (96.29,71.302,Math.toRadians(0));
+    private final Pose startIntakePGPPose = new Pose (93.156,58.73,Math.toRadians(0));
+    private final Pose endIntakePGPPose = new Pose (133,57.119,Math.toRadians(0));
+    private final Pose shootPGPPose = new Pose (100,88,Math.toRadians(0));//new Pose (60.923, 84.046,Math.toRadians(180));
+    private final Pose startIntakePPG = new Pose (93.156,35.707, Math.toRadians(0));
+    private final Pose endIntakePPG = new Pose (130,35.330, Math.toRadians(0));
+    private final Pose shootPPG = new Pose (101.6,88,Math.toRadians(0));
     //new Pose (60.476,83.973, Math.toRadians(180));
-    private final Pose end = new Pose (56,36,180);
+    private final Pose end = new Pose (95.7,125.9,Math.toRadians(0));
 
     private PathChain startPos_ShootPreloadPos, shootPreload_startIntakePPG, startIntakePPG_endIntakePPG;
     private PathChain endIntakePPG_shootPPG, shootPPG_startIntakePGP, startIntakePGP_endIntakePGP;
@@ -129,6 +129,10 @@ public class BlueCloseAuto extends OpMode {
         endClear1_shootPPG = follower.pathBuilder().addPath(new BezierLine (endClear1,shootPPG))
                 .setLinearHeadingInterpolation(endClear1.getHeading(),shootPPG.getHeading())
                 .build();
+        shootPPG_end = follower.pathBuilder()
+                .addPath(new BezierLine (shootPPG, end))
+                .setLinearHeadingInterpolation(shootPPG.getHeading(), end.getHeading())
+                .build();
 
         shootPPG_startIntakePGP = follower.pathBuilder()
                 .addPath(new BezierCurve(shootGPPPose, shootPPGstartIntakePGPcontrolPoint,startIntakePGPPose))
@@ -139,7 +143,7 @@ public class BlueCloseAuto extends OpMode {
                 .setLinearHeadingInterpolation(startIntakePGPPose.getHeading(), endIntakePGPPose.getHeading())
                 .build();
         endIntakePGP_shootPGP = follower.pathBuilder()
-                .addPath(new BezierLine (endIntakePGPPose, shootPGPPose))
+                .addPath(new BezierCurve(endIntakePGPPose, new Pose(31.5,60),shootPGPPose))
                 .setLinearHeadingInterpolation(endIntakePGPPose.getHeading(), shootPGPPose.getHeading())
                 .build();
         shootPGP_startIntakeGPP = follower.pathBuilder()
@@ -156,7 +160,7 @@ public class BlueCloseAuto extends OpMode {
                 .build();
         shootPPG_end = follower.pathBuilder()
                 .addPath(new BezierLine (shootPPG, end))
-                .setLinearHeadingInterpolation(shootPPG.getHeading(), end.getHeading())
+                .setLinearHeadingInterpolation(shootPPG.getHeading(), end.getHeading(),0.5)
                 .build();
 
 
@@ -168,9 +172,9 @@ public class BlueCloseAuto extends OpMode {
             case START:
                 targetFlywheelSpeed = shootPreloadSpeed;
                 targetHoodAngle = preloadHood;
+                intake.setIntakePower(1);
 
                 if (pathTimer.getElapsedTimeSeconds() < 0.1) {
-                    intake.setIntakePower(1);
 
                     follower.followPath(startPos_ShootPreloadPos);
                 }
@@ -189,9 +193,10 @@ public class BlueCloseAuto extends OpMode {
 
                 if (!follower.isBusy()) {
                     intake.shootBalls();
-                    spindex.runSpindexToggle(1);
-                    if (opModeTimer.getElapsedTimeSeconds() > 3) {
-
+                    if (opModeTimer.getElapsedTimeSeconds() > 1.5) {
+                        spindex.runSpindexToggleAuto(1);
+                    }
+                    if (opModeTimer.getElapsedTimeSeconds() > 4.5) {
                         opModeTimer.resetTimer();
                         follower.followPath(shootPreload_startIntakePPG);
                         setPathState(PathStateB.SHOOTPRELOAD_STARTINTAKEPPG);
@@ -271,7 +276,7 @@ public class BlueCloseAuto extends OpMode {
 
                     intake.shootBalls();
                     intake.shootBalls();
-                    spindex.runSpindexToggle(1);
+                    spindex.runSpindexToggleAuto(1);
                     opModeTimer.resetTimer();
 
                     setPathState(PathStateB.SHOOTPPG);
@@ -283,7 +288,7 @@ public class BlueCloseAuto extends OpMode {
                 break;
             case SHOOTPPG:
                 intake.shootBalls();
-                spindex.runSpindexToggle(1);
+                spindex.runSpindexToggleAuto(1);
 
                 if (opModeTimer.getElapsedTimeSeconds()>3.5) {
                     spindex.goToPosition(344);
@@ -301,17 +306,20 @@ public class BlueCloseAuto extends OpMode {
                 intake.intakeBalls();
                 spindex.goToPosition(344);
                 if (!follower.isBusy()){
-                    follower.setMaxPower(1);
+                    follower.setMaxPower(0.75);
 
                     opModeTimer.resetTimer();
                     follower.followPath(startIntakePGP_endIntakePGP);
+                    follower.setMaxPower(0.5);
                     setPathState(PathStateB.STARTINTAKEPGP_ENDINTAKEPGP);
                 }
                 break;
             case STARTINTAKEPGP_ENDINTAKEPGP:
+
                 spindex.goToPosition(344);
                 intake.intakeBalls();
                 if (!follower.isBusy()){
+                    follower.setMaxPower(1);
                     opModeTimer.resetTimer();
                     follower.setMaxPower(1);
                     follower.followPath(endIntakePGP_shootPGP);
@@ -339,16 +347,17 @@ public class BlueCloseAuto extends OpMode {
                 break;
             case SHOOTPGP:
                 intake.shootBalls();
-                spindex.runSpindexToggle(1);
-
-                if (opModeTimer.getElapsedTimeSeconds()>3.5) {
+                intake.shootBalls();
+                spindex.runSpindexToggleAuto(1);
+                if (opModeTimer.getElapsedTimeSeconds() > 2.5 && opModeTimer.getElapsedTimeSeconds() < 3.5) {
+                    spindex.runSpindexToggleAuto(1);
+                }
+                if (opModeTimer.getElapsedTimeSeconds() > 3.5) {
                     spindex.goToPosition(344);
                     targetFlywheelSpeed= ppgSpeed;
                     targetHoodAngle= pgpHood;
-                    follower.followPath(shootPGP_startIntakeGPP);
-                    setPathState(PathStateB.SHOOTPGP_STARTINTAKEGPP);
-
-
+                    follower.followPath(shootPPG_end);
+                    setPathState(PathStateB.DONE);
                 }
                 break;
             case SHOOTPGP_STARTINTAKEGPP:
@@ -391,7 +400,7 @@ public class BlueCloseAuto extends OpMode {
 
             case SHOOTGPP:
                 intake.shootBalls();
-                spindex.runSpindexToggle(1);
+                spindex.runSpindexToggleAuto(1);
 
                 if (opModeTimer.getElapsedTimeSeconds()>3.5) {
 
@@ -403,14 +412,13 @@ public class BlueCloseAuto extends OpMode {
                 break;
 
             case SHOOTGPP_END:
-                spindex.runSpindexToggle(1);
+                spindex.runSpindexToggleAuto(1);
 
 
                 break;
 
             case DONE:
                 spindex.goToPosition(344);
-                turret.angularVelocityPIDF(180);
                 telemetry.addLine("Finished");
                 break;
 
@@ -483,9 +491,11 @@ public class BlueCloseAuto extends OpMode {
         telemetry.addData("Turret Aim", turret.getTargetAngle (follower.getPose().getX(),follower.getPose().getY()));
         telemetry.addData("pathState", pathState.toString());
         telemetry.addData ("turret Target", turret.getTargetAngle(x,y));
+
         Location.START = follower.getPose();
         Location.turretPosition=turret.getTurretPosition();
     }
 }
+
 
 

@@ -52,8 +52,9 @@ public class FullFieldShootingTuner extends OpMode{
 
         intake = new Intake(hardwareMap);
         spindex = new Spindex (hardwareMap);
-        turret = new Turret(hardwareMap, "blue",0,false);
+        turret = new Turret(hardwareMap, true,follower,false);
         drive = new aDrivetrain(hardwareMap);
+
 
         telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
         turret.disableTurretAim();
@@ -134,11 +135,13 @@ public class FullFieldShootingTuner extends OpMode{
 
 
         telemetry.addData("Hood Angle", hoodAngle);
-        telemetry.addData("flywheelVelocity", turret.getFlyWheelSpeed());
+        telemetry.addData("flywheelVelocity target", flywheelVelocity);
+        telemetry.addData("flywheelVelocity", turret.getFlywheelVelocity());
+
         telemetry.addData ("X", follower.getPose().getX());
         telemetry.addData ( "Y", follower.getPose().getY());
         telemetry.addData("H", Math.toDegrees(follower.getPose().getHeading()));
-        telemetry.addData ("Turret Angle", turret.getTurretDeviationOffset());
+        telemetry.addData ("Turret Angle", turret.getTurretPosition());
 
         telemetryM.debug("position", follower.getPose());
         telemetryM.debug("velocity", follower.getVelocity());
